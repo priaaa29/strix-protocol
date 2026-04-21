@@ -1,0 +1,70 @@
+name: Contracts CI
+
+on:
+  push:
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/contracts.yml'
+  pull_request:
+    paths:
+      - 'contracts/**'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown,wasm32v1-none
+
+      - name: Install stellar CLI
+        run: cargo install --locked stellar-cli --features opt
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('contracts/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Run unit tests (pricing-engine)
+        working-directory: contracts
+        run: cargo test -p pricing-engine -- --nocapture
+
+      - name: Run unit tests (underwriting-vault)
+        working-directory: contracts
+        run: cargo test -p underwriting-vault -- --nocapture
+
+      - name: Run unit tests (option-market)
+        working-directory: contracts
+        run: cargo test -p option-market -- --nocapture
+
+      - name: Run integration tests
+        working-directory: contracts
+        run: cargo test -p integration-tests -- --nocapture
+
+      - name: Build WASM
+        working-directory: contracts
+        run: stellar contract build
+
+      - name: Check WASM sizes
+        working-directory: contracts
+        run: |
+          for f in target/wasm32v1-none/release/*.wasm; do
+            size=$(wc -c < "$f")
+            echo "$f: ${size} bytes"
+            if [ "$size" -gt 524288 ]; then
+              echo "ERROR: $f exceeds 512 KB limit"
+              exit 1
+            fi
+          done
