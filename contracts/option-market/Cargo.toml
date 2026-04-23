@@ -1,0 +1,17 @@
+[package]
+name = "option-market"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+soroban-sdk = { version = "21.7.6" }
+
+[dev-dependencies]
+soroban-sdk = { version = "21.7.6", features = ["testutils"] }
+underwriting-vault = { path = "../underwriting-vault", features = ["testutils"] }
+
+[features]
+testutils = ["soroban-sdk/testutils"]
