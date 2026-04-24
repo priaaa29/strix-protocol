@@ -1,0 +1,13 @@
+[package]
+name = "integration-tests"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+soroban-sdk = { version = "21.7.6", features = ["testutils"] }
+pricing-engine = { path = "../pricing-engine", features = ["testutils"] }
+underwriting-vault = { path = "../underwriting-vault", features = ["testutils"] }
+option-market = { path = "../option-market", features = ["testutils"] }
