@@ -37,6 +37,12 @@ Thumbs.db
 # WASM build artifacts
 *.wasm
 
+# TypeScript build info
+*.tsbuildinfo
+
+# Resources (binary PDFs)
+Resources/
+
 # Logs
 *.log
 npm-debug.log*
