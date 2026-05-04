@@ -7,6 +7,7 @@ import {
 } from '@stellar/stellar-sdk';
 import { getOptionsChainCache, setOptionsChainCache } from '../indexer/db';
 import type { StrikeInfoCached } from '../types';
+import { logger } from '../logger';
 
 const router = Router();
 
@@ -35,7 +36,7 @@ async function fetchStrikesFromChain(expiry: number): Promise<StrikeInfoCached[]
     const simResult = await server.simulateTransaction(tx);
 
     if (SorobanRpc.Api.isSimulationError(simResult)) {
-      console.warn('[Options API] Simulation error:', simResult.error);
+      logger.warn('[Options API] Simulation error:', simResult.error);
       return null;
     }
 
@@ -50,7 +51,7 @@ async function fetchStrikesFromChain(expiry: number): Promise<StrikeInfoCached[]
       putPremium: String(s.put_premium ?? '0'),
     }));
   } catch (err: unknown) {
-    console.warn('[Options API] Chain fetch failed:', err instanceof Error ? err.message : String(err));
+    logger.warn('[Options API] Chain fetch failed:', err instanceof Error ? err.message : String(err));
     return null;
   }
 }
@@ -99,7 +100,7 @@ router.get('/chain', async (req: Request, res: Response) => {
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[API] GET /options/chain error:', message);
+    logger.error('[API] GET /options/chain error:', message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

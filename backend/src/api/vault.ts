@@ -3,6 +3,7 @@
 import { Router, Request, Response } from 'express';
 import { SorobanRpc, Contract, TransactionBuilder, BASE_FEE, Networks, scValToNative } from '@stellar/stellar-sdk';
 import { getVaultStatsCache, setVaultStatsCache } from '../indexer/db';
+import { logger } from '../logger';
 
 const router = Router();
 
@@ -35,7 +36,7 @@ async function fetchVaultStatsFromChain(): Promise<{
     const simResult = await server.simulateTransaction(tx);
 
     if (SorobanRpc.Api.isSimulationError(simResult)) {
-      console.warn('[Vault API] Simulation error:', simResult.error);
+      logger.warn('[Vault API] Simulation error:', simResult.error);
       return null;
     }
 
@@ -51,7 +52,7 @@ async function fetchVaultStatsFromChain(): Promise<{
       sharePrice: String(raw.share_price ?? '10000000'),
     };
   } catch (err: unknown) {
-    console.warn('[Vault API] Chain fetch failed:', err instanceof Error ? err.message : String(err));
+    logger.warn('[Vault API] Chain fetch failed:', err instanceof Error ? err.message : String(err));
     return null;
   }
 }
@@ -109,7 +110,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[API] GET /vault/stats error:', message);
+    logger.error('[API] GET /vault/stats error:', message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -3,8 +3,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import type { DbEvent, DbFeedback } from '../types';
+import { logger } from '../logger';
 
-const DB_PATH = path.join(process.cwd(), 'strix.db');
+const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'strix.db');
 let db: Database.Database;
 
 export function getDb(): Database.Database {
@@ -60,7 +61,7 @@ export function initDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_events_block_time ON events(block_time);
   `);
 
-  console.log('Database initialized at', DB_PATH);
+  logger.info(`[DB] Initialized at ${DB_PATH}`);
 }
 
 // ── Event queries ──────────────────────────────────────────────────────────

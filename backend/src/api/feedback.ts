@@ -3,6 +3,7 @@
 import { Router, Request, Response } from 'express';
 import { insertFeedback, getAllFeedback } from '../indexer/db';
 import type { DbFeedback } from '../types';
+import { logger } from '../logger';
 
 const router = Router();
 
@@ -54,22 +55,32 @@ router.post('/', (req: Request, res: Response) => {
     res.status(201).json({ success: true, message: 'Feedback submitted. Thank you!' });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[API] POST /feedback error:', msg);
+    logger.error('[API] POST /feedback error:', msg);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 /**
  * GET /api/feedback
- * Returns all feedback (admin use — in production this would require auth).
+ * Returns all feedback. Requires Authorization: Bearer <ADMIN_API_KEY> header.
  */
-router.get('/', (_req: Request, res: Response) => {
+router.get('/', (req: Request, res: Response) => {
+  const adminKey = process.env.ADMIN_API_KEY;
+  if (!adminKey) {
+    res.status(503).json({ error: 'Admin endpoint not configured' });
+    return;
+  }
+  const authHeader = req.headers['authorization'] ?? '';
+  if (authHeader !== `Bearer ${adminKey}`) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
   try {
     const feedback = getAllFeedback();
     res.json({ feedback, count: feedback.length });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[API] GET /feedback error:', msg);
+    logger.error('[API] GET /feedback error:', msg);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

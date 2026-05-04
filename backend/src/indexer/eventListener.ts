@@ -4,6 +4,7 @@
 import { SorobanRpc } from '@stellar/stellar-sdk';
 import { insertEvent, getLastIndexedBlock } from './db';
 import type { DbEvent } from '../types';
+import { logger } from '../logger';
 
 const RPC_URL = process.env.RPC_URL || 'https://soroban-testnet.stellar.org';
 const POLL_INTERVAL_MS = 30_000;
@@ -146,12 +147,11 @@ async function pollEvents(): Promise<void> {
 
     if (maxLedger > lastLedger) {
       lastLedger = maxLedger;
-      console.log(`[Indexer] Indexed up to ledger ${lastLedger} (${response.events.length} events)`);
+      logger.info(`[Indexer] Indexed up to ledger ${lastLedger} (${response.events.length} events)`);
     }
   } catch (err: unknown) {
-    // Network errors are expected during testnet downtime — log and continue
     const message = err instanceof Error ? err.message : String(err);
-    console.warn(`[Indexer] Poll failed: ${message}`);
+    logger.warn(`[Indexer] Poll failed: ${message}`);
   }
 }
 
@@ -165,7 +165,7 @@ export function startEventListener(): void {
     lastLedger = lastDbBlock;
   }
 
-  console.log(`[Indexer] Starting event listener (poll every ${POLL_INTERVAL_MS / 1000}s, from ledger ${lastLedger})`);
+  logger.info(`[Indexer] Starting event listener (poll every ${POLL_INTERVAL_MS / 1000}s, from ledger ${lastLedger})`);
 
   // Poll immediately, then on interval
   void pollEvents();
@@ -179,6 +179,6 @@ export function stopEventListener(): void {
   if (pollingTimer !== null) {
     clearInterval(pollingTimer);
     pollingTimer = null;
-    console.log('[Indexer] Event listener stopped.');
+    logger.info('[Indexer] Event listener stopped.');
   }
 }
