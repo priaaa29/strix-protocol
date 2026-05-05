@@ -6,6 +6,9 @@ import { useOptions } from '@/hooks/useOptions';
 import { useWallet } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/button';
 import { formatUsdcDollar, formatUsdc, formatExpiry, formatPercent } from '@/lib/utils';
+import { ACTIVE_NETWORK } from '@/lib/constants';
+
+const NETWORK_LABEL = ACTIVE_NETWORK === 'mainnet' ? 'Mainnet' : 'Testnet';
 
 function getNextFriday(): number {
   const now = new Date();
@@ -17,23 +20,11 @@ function getNextFriday(): number {
   return Math.floor(fri.getTime() / 1000);
 }
 
-const PARAMS = [
-  { label: 'Underlying',  value: 'XLM / USDC' },
-  { label: 'Style',       value: 'European'   },
-  { label: 'Settlement',  value: 'Cash (USDC)' },
-  { label: 'Impl. Vol',   value: '80%'        },
-  { label: 'Cycle',       value: 'Weekly'     },
-  { label: 'Strike Range',value: '±5–20%'    },
-  { label: 'Oracle',      value: 'MockOracle' },
-  { label: 'Network',     value: 'Testnet'    },
-] as const;
-
 export default function Dashboard() {
-  const { wallet } = useWallet();
-  const { vaultInfo, loading: vaultLoading } = useVault(wallet.address);
-  const { strikes, spotPrice } = useOptions();
+  const { wallet }                               = useWallet();
+  const { vaultInfo, loading: vaultLoading }     = useVault(wallet.address);
+  const { strikes, spotPrice }                   = useOptions();
 
-  const now = Math.floor(Date.now() / 1000);
   const expiry = getNextFriday();
 
   const utilizationRate =
@@ -41,7 +32,6 @@ export default function Dashboard() {
       ? Number(vaultInfo.locked * 10000n / vaultInfo.tvl) / 100
       : 0;
 
-  // Take the 3 ATM-nearest strikes for the preview
   const previewStrikes = [...strikes]
     .sort((a, b) => {
       const da = a.strike > spotPrice ? a.strike - spotPrice : spotPrice - a.strike;
@@ -51,189 +41,247 @@ export default function Dashboard() {
     .slice(0, 5);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
 
-      {/* ── Page header ───────────────────────────────────── */}
-      <div className="animate-enter">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <span className="label text-gold">First Options Protocol on Stellar</span>
-            <h1 className="font-display text-[28px] sm:text-[36px] font-bold tracking-tight text-ink mt-2 leading-[1.1]">
-              Trade XLM Options.<br />
-              <span className="text-ink-2">Earn Yield. On-chain.</span>
-            </h1>
-          </div>
-          <div className="flex gap-2 mt-1">
-            <Link href="/options"><Button size="md">Trade Now</Button></Link>
-            <Link href="/vault"><Button size="md" variant="outline">Add Liquidity</Button></Link>
-          </div>
+      {/* ══════════════════════════════════════════════════
+          HERO
+          ══════════════════════════════════════════════════ */}
+      <section className="animate-enter relative">
+        {/* Large decorative star — top right */}
+        <div className="pointer-events-none absolute -top-4 right-0 opacity-[0.07]" aria-hidden>
+          <SparkSvg size={160} />
         </div>
-      </div>
 
-      {/* ── Key stats row ──────────────────────────────────── */}
-      <div className="animate-enter delay-100">
-        <div className="grid grid-cols-2 sm:grid-cols-4 border border-surface-border rounded-sm overflow-hidden">
-          {[
-            {
-              label: 'Vault TVL',
-              value: vaultLoading || !vaultInfo
-                ? null
-                : formatUsdcDollar(vaultInfo.tvl, 0),
-              sub: vaultInfo ? `${formatPercent(utilizationRate, 1)} locked` : '',
-            },
-            {
-              label: 'Available Capital',
-              value: vaultLoading || !vaultInfo
-                ? null
-                : formatUsdcDollar(vaultInfo.available, 0),
-              sub: 'for new positions',
-            },
-            {
-              label: 'Spot Price',
-              value: spotPrice > 0n ? `$${formatUsdc(spotPrice, 4)}` : null,
-              sub: 'XLM / USDC',
-            },
-            {
-              label: 'Next Expiry',
-              value: new Date(expiry * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              sub: 'Fri 16:00 UTC',
-            },
-          ].map((stat, i) => (
-            <div
-              key={stat.label}
-              className={[
-                "p-4 sm:p-5 bg-surface-raised border-surface-border",
-                i < 3 ? "border-r" : "",
-                i < 2 ? "border-b sm:border-b-0" : "",
-              ].join(' ')}
-            >
-              <span className="label">{stat.label}</span>
-              <div className="mt-2">
-                {stat.value !== null ? (
-                  <span className="data-val text-[18px] sm:text-[22px] text-ink tabular">
-                    {stat.value}
-                  </span>
-                ) : (
-                  <span className="skeleton h-6 w-24 mt-1" />
-                )}
-              </div>
-              {stat.sub && (
-                <p className="text-[11px] text-ink-3 mt-1">{stat.sub}</p>
+        <p className="label mb-4 text-white/30">
+          First Options Protocol on Stellar · {NETWORK_LABEL}
+        </p>
+
+        <h1 className="font-display leading-[0.92] tracking-[-0.04em] text-white mb-6">
+          <span className="block text-[clamp(44px,8vw,72px)] font-bold">Trade XLM</span>
+          <span className="block text-[clamp(44px,8vw,72px)] font-light text-white/30">Options.</span>
+        </h1>
+
+        <p className="text-[13px] text-white/45 max-w-sm leading-relaxed mb-8 font-sans">
+          European-style. Black-Scholes priced. Cash-settled in USDC every Friday at 16:00 UTC.
+        </p>
+
+        <div className="flex items-center gap-3">
+          <Link href="/options">
+            <Button size="lg">Trade Now</Button>
+          </Link>
+          <Link href="/vault">
+            <Button size="lg" variant="outline">Add Liquidity</Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════
+          STATS
+          ══════════════════════════════════════════════════ */}
+      <section className="animate-enter delay-100">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+          {/* TVL — hero stat */}
+          <div className="glass-card px-6 py-6 relative overflow-hidden">
+            {/* Soft top glow */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            <span className="label">Vault TVL</span>
+            <div className="mt-3">
+              {vaultLoading || !vaultInfo ? (
+                <span className="skeleton h-10 w-32" />
+              ) : (
+                <span className="data-val text-[clamp(28px,4vw,38px)] text-white tabular">
+                  {formatUsdcDollar(vaultInfo.tvl, 0)}
+                </span>
               )}
             </div>
-          ))}
-        </div>
-
-        {/* Utilization bar */}
-        {vaultInfo && (
-          <div className="util-track rounded-none mt-0 border-x border-b border-surface-border rounded-b-sm overflow-hidden">
-            <div
-              className="util-fill"
-              style={{ width: `${Math.min(utilizationRate, 100)}%` }}
-            />
+            {vaultInfo && (
+              <div className="mt-4">
+                <div className="util-track w-full">
+                  <div className="util-fill" style={{ width: `${Math.min(utilizationRate, 100)}%` }} />
+                </div>
+                <p className="text-[10px] text-white/25 mt-1.5 font-data tabular">
+                  {formatPercent(utilizationRate, 1)} utilized
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* ── Options chain preview ──────────────────────────── */}
-      <div className="animate-enter delay-200">
-        <div className="flex items-center justify-between mb-3">
-          <span className="label">Live Options Chain</span>
-          <Link href="/options" className="text-[11px] text-gold hover:text-gold-bright transition-colors duration-150 uppercase tracking-wider">
+          {/* Available capital */}
+          <div className="glass-card px-5 py-6">
+            <span className="label">Available</span>
+            <div className="mt-3">
+              {vaultLoading || !vaultInfo ? (
+                <span className="skeleton h-7 w-24" />
+              ) : (
+                <span className="data-val text-[22px] text-white tabular">
+                  {formatUsdcDollar(vaultInfo.available, 0)}
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-white/25 mt-1.5 font-sans">for new positions</p>
+          </div>
+
+          {/* Next expiry */}
+          <div className="glass-card px-5 py-6">
+            <span className="label">Next Expiry</span>
+            <div className="mt-3">
+              <span className="data-val text-[22px] text-white tabular">
+                {new Date(expiry * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            </div>
+            <p className="text-[10px] text-white/25 mt-1.5 font-sans">Friday · 16:00 UTC</p>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════
+          OPTIONS CHAIN PREVIEW
+          ══════════════════════════════════════════════════ */}
+      <section className="animate-enter delay-200">
+
+        <div className="flex items-baseline justify-between mb-5">
+          <div>
+            <span className="label mb-1.5">Live Options Chain</span>
+            <p className="text-[11px] text-white/25 font-sans">
+              Expiry {formatExpiry(expiry)} · {spotPrice > 0n ? `Spot $${formatUsdc(spotPrice, 4)}` : 'Loading spot…'}
+            </p>
+          </div>
+          <Link
+            href="/options"
+            className="text-[10px] text-white/25 hover:text-white/60 font-sans tracking-wider uppercase transition-colors flex items-center gap-1"
+          >
             Full chain →
           </Link>
         </div>
 
-        <div className="border border-surface-border rounded-sm overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_1fr_auto_1fr] bg-surface-over border-b border-surface-border px-4 py-2">
-            {['Strike', 'Call', '', 'Put'].map((h, i) => (
-              <span key={i} className={`label ${i === 1 ? 'text-mint' : i === 3 ? 'text-rust' : ''} ${i >= 1 ? 'text-right' : ''}`}>
-                {h}
-              </span>
-            ))}
+        <div className="glass-card overflow-hidden">
+          {/* Column headers */}
+          <div className="grid grid-cols-[auto_1fr_1fr] sm:grid-cols-[auto_1fr_36px_1fr] border-b border-white/[0.06] bg-white/[0.02]">
+            <div className="px-4 py-2.5 w-[110px]"><span className="label">Strike</span></div>
+            <div className="px-4 py-2.5 text-right"><span className="label text-mint/60">Call</span></div>
+            <div className="hidden sm:block px-2 py-2.5 text-center"><span className="label text-white/15">·</span></div>
+            <div className="px-4 py-2.5 text-right"><span className="label text-rust/60">Put</span></div>
           </div>
 
           {previewStrikes.length > 0 ? previewStrikes.map((row) => {
-            const isAtm = row.strike === spotPrice ||
-              (spotPrice > 0n && Number(row.strike > spotPrice ? row.strike - spotPrice : spotPrice - row.strike) / Number(spotPrice) < 0.005);
+            const isAtm = spotPrice > 0n &&
+              Number(row.strike > spotPrice ? row.strike - spotPrice : spotPrice - row.strike) / Number(spotPrice) < 0.005;
             const callItm = row.strike < spotPrice;
             const putItm  = row.strike > spotPrice;
 
             return (
               <div
                 key={row.strike.toString()}
-                className={`row-hover grid grid-cols-[1fr_1fr_auto_1fr] px-4 py-2.5 border-b border-surface-border last:border-b-0 ${isAtm ? 'bg-gold/[0.04]' : ''}`}
+                className={`row-hover grid grid-cols-[auto_1fr_1fr] sm:grid-cols-[auto_1fr_36px_1fr] border-b border-white/[0.05] last:border-b-0 ${isAtm ? 'bg-white/[0.02]' : ''}`}
               >
-                <span className={`font-mono text-sm tabular font-medium ${isAtm ? 'text-gold' : 'text-ink'}`}>
-                  ${formatUsdc(row.strike, 4)}
-                  {isAtm && <span className="ml-1.5 text-[9px] text-gold uppercase tracking-widest">atm</span>}
-                </span>
-                <span className={`font-mono text-sm tabular text-right ${callItm ? 'text-mint' : 'text-ink-2'}`}>
-                  {row.callPremium > 0n ? `$${formatUsdc(row.callPremium, 4)}` : <span className="skeleton h-3.5 w-12 inline-block" />}
-                </span>
-                <span className="px-3 text-ink-3 text-sm">·</span>
-                <span className={`font-mono text-sm tabular text-right ${putItm ? 'text-rust' : 'text-ink-2'}`}>
-                  {row.putPremium > 0n ? `$${formatUsdc(row.putPremium, 4)}` : <span className="skeleton h-3.5 w-12 inline-block" />}
-                </span>
+                <div className="px-4 py-3 w-[110px] flex items-center gap-2">
+                  <span className={`font-data text-[12px] tabular font-semibold ${isAtm ? 'text-white' : 'text-white/70'}`}>
+                    ${formatUsdc(row.strike, 4)}
+                  </span>
+                  {isAtm && <span className="badge badge-atm">ATM</span>}
+                </div>
+                <div className="px-4 py-3 text-right">
+                  <span className={`font-data text-[12px] tabular ${callItm ? 'text-mint' : 'text-white/30'}`}>
+                    {row.callPremium > 0n
+                      ? `$${formatUsdc(row.callPremium, 4)}`
+                      : <span className="skeleton h-3 w-14 inline-block" />
+                    }
+                  </span>
+                </div>
+                <div className="hidden sm:flex items-center justify-center px-2 py-3">
+                  <span className="text-white/15 text-[11px]">·</span>
+                </div>
+                <div className="px-4 py-3 text-right">
+                  <span className={`font-data text-[12px] tabular ${putItm ? 'text-rust' : 'text-white/30'}`}>
+                    {row.putPremium > 0n
+                      ? `$${formatUsdc(row.putPremium, 4)}`
+                      : <span className="skeleton h-3 w-14 inline-block" />
+                    }
+                  </span>
+                </div>
               </div>
             );
           }) : (
-            <div className="px-4 py-6 text-center">
-              <span className="skeleton h-4 w-32 mx-auto block mb-2" />
-              <span className="skeleton h-4 w-24 mx-auto block" />
+            <div className="px-4 py-8 flex flex-col items-center gap-2">
+              <span className="skeleton h-3.5 w-40 block" />
+              <span className="skeleton h-3 w-28 block" />
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* ── How it works ──────────────────────────────────── */}
-      <div className="animate-enter delay-250">
-        <span className="label mb-4 block">Protocol Flow</span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-surface-border border border-surface-border rounded-sm overflow-hidden">
+      {/* ══════════════════════════════════════════════════
+          PROTOCOL FLOW
+          ══════════════════════════════════════════════════ */}
+      <section className="animate-enter delay-250">
+        <span className="label mb-6 block">How It Works</span>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             {
               n: '01',
-              title: 'LPs Deposit USDC',
-              body: 'Liquidity providers fund the underwriting vault. They earn option premiums when buyers pay to open positions.',
+              title: 'LPs Fund the Vault',
+              body: 'Deposit USDC to underwrite options. Earn premium income when options expire worthless.',
             },
             {
               n: '02',
               title: 'Traders Buy Options',
-              body: 'Buy European calls or puts on XLM at any listed strike. Premiums computed via Black-Scholes with live oracle pricing.',
+              body: 'Buy European calls or puts at any listed strike. Black-Scholes pricing with live oracle data.',
             },
             {
               n: '03',
               title: 'Friday Settlement',
-              body: 'Options settle weekly at 16:00 UTC. ITM holders claim USDC payouts. OTM premiums accrue to vault share price.',
+              body: 'Options settle at 16:00 UTC each Friday. ITM holders claim USDC payouts automatically.',
             },
           ].map((step) => (
-            <div key={step.n} className="bg-surface-raised p-5 space-y-2">
-              <span className="data-val text-[28px] text-surface-border tabular select-none">
-                {step.n}
-              </span>
-              <h3 className="font-display text-[12px] font-semibold uppercase tracking-[0.06em] text-ink">
-                {step.title}
-              </h3>
-              <p className="text-[12px] text-ink-2 leading-relaxed">{step.body}</p>
+            <div key={step.n} className="glass-card px-6 py-6">
+              <span className="flow-step-num block mb-4">{step.n}</span>
+              <h3 className="font-display text-[14px] font-bold text-white tracking-tight mb-2">{step.title}</h3>
+              <p className="text-[11px] text-white/30 leading-relaxed font-sans">{step.body}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* ── Protocol params ───────────────────────────────── */}
-      <div className="animate-enter delay-300">
-        <span className="label mb-3 block">Protocol Parameters</span>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-surface-border border border-surface-border rounded-sm overflow-hidden">
-          {PARAMS.map((p) => (
-            <div key={p.label} className="bg-surface-raised px-4 py-3">
-              <span className="label text-ink-3">{p.label}</span>
-              <p className="text-sm text-ink font-mono mt-1 tabular">{p.value}</p>
-            </div>
-          ))}
+      {/* ══════════════════════════════════════════════════
+          PROTOCOL PARAMS — reference grid
+          ══════════════════════════════════════════════════ */}
+      <section className="animate-enter delay-300">
+        <span className="label mb-5 block">Protocol Parameters</span>
+        <div className="glass-card overflow-hidden">
+          <div className="grid grid-cols-2 sm:grid-cols-4">
+            {[
+              ['Underlying',   'XLM / USDC'],
+              ['Style',        'European'],
+              ['Settlement',   'Cash (USDC)'],
+              ['Implied Vol',  '80%'],
+              ['Cycle',        'Weekly'],
+              ['Strike Range', '±5–20%'],
+              ['Oracle',       'Reflector'],
+              ['Network',      NETWORK_LABEL],
+            ].map(([k, v], i) => (
+              <div key={k} className={`px-4 py-3.5 ${i < 4 ? 'border-b border-white/[0.05]' : ''} ${i % 4 !== 3 ? 'border-r border-white/[0.05]' : ''}`}>
+                <span className="label mb-1">{k}</span>
+                <p className="font-data text-[11px] text-white/50 tabular">{v}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
     </div>
+  );
+}
+
+function SparkSvg({ size = 100 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" aria-hidden>
+      <path
+        d="M50 0 L53.5 46.5 L100 50 L53.5 53.5 L50 100 L46.5 53.5 L0 50 L46.5 46.5 Z"
+        fill="white"
+      />
+    </svg>
   );
 }
