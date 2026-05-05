@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Syne, IBM_Plex_Mono } from 'next/font/google';
+import { Syne, Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { Layout } from '@/components/Layout';
 
@@ -7,6 +7,13 @@ const syne = Syne({
   subsets: ['latin'],
   variable: '--font-syne',
   weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  weight: ['300', '400', '500', '600', '700'],
   display: 'swap',
 });
 
@@ -31,7 +38,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${syne.variable} ${ibmPlexMono.variable}`}>
+    <html lang="en" className={`dark ${syne.variable} ${inter.variable} ${ibmPlexMono.variable}`}>
       <body>
         <Layout>{children}</Layout>
       </body>

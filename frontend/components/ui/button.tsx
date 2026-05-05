@@ -10,44 +10,44 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'md', loading, disabled, children, ...props }, ref) => {
     const base = [
-      'inline-flex items-center justify-center',
-      'font-mono font-semibold uppercase tracking-[0.08em]',
-      'rounded-sm',
-      'border transition-all duration-[120ms]',
+      'inline-flex items-center justify-center gap-2',
+      'font-sans font-medium tracking-[0.03em]',
+      'rounded-full',
+      'border transition-all duration-[140ms]',
       'active:scale-[0.97]',
-      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
-      'disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none',
+      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40',
+      'disabled:opacity-35 disabled:cursor-not-allowed disabled:pointer-events-none',
     ].join(' ');
 
     const variants: Record<string, string> = {
       default: [
-        'bg-gold text-surface-base border-gold',
-        'hover:bg-gold-bright hover:border-gold-bright',
-        'shadow-[0_0_12px_hsl(45_96%_54%/0.15)]',
-        'hover:shadow-[0_0_18px_hsl(45_96%_54%/0.25)]',
+        'bg-white text-black border-white',
+        'hover:bg-white/90',
+        'shadow-[0_0_24px_rgba(255,255,255,0.08)]',
+        'hover:shadow-[0_0_32px_rgba(255,255,255,0.14)]',
       ].join(' '),
       outline: [
-        'bg-transparent text-gold border-gold/50',
-        'hover:border-gold hover:bg-gold/8',
+        'bg-transparent text-white border-white/20',
+        'hover:border-white/40 hover:bg-white/[0.04]',
       ].join(' '),
       ghost: [
-        'bg-transparent text-ink-2 border-transparent',
-        'hover:text-ink hover:bg-surface-over',
+        'bg-transparent text-white/50 border-transparent',
+        'hover:text-white hover:bg-white/[0.04]',
       ].join(' '),
       danger: [
-        'bg-rust text-white border-rust',
-        'hover:bg-rust-dim',
+        'bg-transparent text-rust border-rust/40',
+        'hover:bg-rust/[0.08] hover:border-rust/60',
       ].join(' '),
       success: [
-        'bg-mint text-surface-base border-mint',
-        'hover:opacity-90',
+        'bg-transparent text-mint border-mint/40',
+        'hover:bg-mint/[0.08] hover:border-mint/60',
       ].join(' '),
     };
 
     const sizes: Record<string, string> = {
-      sm: 'h-7 px-3 text-[10px]',
-      md: 'h-9 px-4 text-[11px]',
-      lg: 'h-11 px-6 text-[12px]',
+      sm: 'h-7  px-3.5 text-[11px]',
+      md: 'h-9  px-5   text-[12px]',
+      lg: 'h-11 px-7   text-[13px]',
     };
 
     return (
@@ -59,7 +59,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading && (
           <svg
-            className="mr-2 h-3 w-3 animate-spin"
+            className="h-3 w-3 animate-spin"
             fill="none"
             viewBox="0 0 24 24"
             aria-hidden

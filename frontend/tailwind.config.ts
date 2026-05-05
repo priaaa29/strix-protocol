@@ -9,51 +9,57 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Surfaces — deep cold blue-black
-        "surface-base":    "hsl(222, 20%, 6%)",
-        "surface-raised":  "hsl(222, 18%, 9%)",
-        "surface-over":    "hsl(222, 16%, 13%)",
-        "surface-subtle":  "hsl(222, 14%, 17%)",
-        "surface-border":  "hsl(218, 18%, 20%)",
+        // Surfaces — pure black family
+        "surface-base":    "hsl(0, 0%, 2%)",
+        "surface-raised":  "hsl(0, 0%, 5%)",
+        "surface-over":    "hsl(0, 0%, 8%)",
+        "surface-subtle":  "hsl(0, 0%, 12%)",
+        "surface-border":  "rgba(255,255,255,0.08)",
 
         // Accents
-        "gold":            "hsl(45, 96%, 54%)",
-        "gold-dim":        "hsl(45, 70%, 36%)",
+        "gold":            "hsl(45, 90%, 58%)",
+        "gold-dim":        "hsl(45, 60%, 32%)",
         "gold-bright":     "hsl(45, 100%, 68%)",
-        "mint":            "hsl(165, 75%, 46%)",
-        "mint-dim":        "hsl(165, 60%, 28%)",
-        "rust":            "hsl(355, 78%, 60%)",
-        "rust-dim":        "hsl(355, 60%, 38%)",
+        "mint":            "hsl(165, 65%, 44%)",
+        "mint-dim":        "hsl(165, 55%, 26%)",
+        "rust":            "hsl(355, 68%, 56%)",
+        "rust-dim":        "hsl(355, 55%, 36%)",
 
-        // Text
-        "ink":             "hsl(215, 25%, 90%)",
-        "ink-2":           "hsl(215, 14%, 54%)",
-        "ink-3":           "hsl(215, 12%, 35%)",
+        // Text — pure white scale
+        "ink":             "#ffffff",
+        "ink-2":           "hsl(0, 0%, 55%)",
+        "ink-3":           "hsl(0, 0%, 28%)",
       },
       fontFamily: {
         display: ["var(--font-syne)", "sans-serif"],
+        sans:    ["var(--font-inter)", "system-ui", "sans-serif"],
         mono:    ["var(--font-ibm-plex-mono)", "monospace"],
-        sans:    ["var(--font-ibm-plex-mono)", "monospace"],
       },
       fontSize: {
         "2xs": ["0.6875rem", { lineHeight: "1.2", letterSpacing: "0.05em" }],
       },
       borderRadius: {
-        sm: "3px",
-        DEFAULT: "4px",
-        md: "6px",
-        lg: "8px",
+        sm:      "4px",
+        DEFAULT: "8px",
+        md:      "12px",
+        lg:      "16px",
+        xl:      "24px",
+        full:    "9999px",
+      },
+      backdropBlur: {
+        xs: "4px",
       },
       animation: {
-        "fade-up":     "fade-up 0.45s ease-out both",
-        "fade-in":     "fade-in 0.35s ease-out both",
-        "shimmer":     "shimmer 1.8s linear infinite",
-        "flash-mint":  "flash-mint 0.7s ease-out forwards",
-        "flash-rust":  "flash-rust 0.7s ease-out forwards",
+        "fade-up":    "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both",
+        "fade-in":    "fade-in 0.35s ease-out both",
+        "shimmer":    "shimmer 2s linear infinite",
+        "flash-mint": "flash-mint 0.7s ease-out forwards",
+        "flash-rust": "flash-rust 0.7s ease-out forwards",
+        "spin-slow":  "spin 8s linear infinite",
       },
       keyframes: {
         "fade-up": {
-          "0%":   { opacity: "0", transform: "translateY(14px)" },
+          "0%":   { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
@@ -65,16 +71,16 @@ const config: Config = {
           "100%": { backgroundPosition: "200% 0" },
         },
         "flash-mint": {
-          "0%":   { color: "hsl(165, 75%, 46%)" },
+          "0%":   { color: "hsl(165, 65%, 44%)" },
           "100%": { color: "inherit" },
         },
         "flash-rust": {
-          "0%":   { color: "hsl(355, 78%, 60%)" },
+          "0%":   { color: "hsl(355, 68%, 56%)" },
           "100%": { color: "inherit" },
         },
       },
       transitionTimingFunction: {
-        "snappy": "cubic-bezier(0.2, 0, 0.1, 1)",
+        "spring": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },

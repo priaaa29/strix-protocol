@@ -3,33 +3,37 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════
-   STRIX PROTOCOL — DESIGN SYSTEM
-   Mood: Tokyo quant desk at 2AM
-   Fonts: Syne (display) + IBM Plex Mono (everything)
+   STRIX PROTOCOL — DESIGN SYSTEM v2
+   Mood: Premium dark. Editorial scale. Clean precision.
+   Fonts: Syne (display) · Inter (body) · IBM Plex Mono (data)
    ═══════════════════════════════════════════════════════════ */
 
 :root {
-  --s-base:    hsl(222, 20%, 6%);
-  --s-raised:  hsl(222, 18%, 9%);
-  --s-over:    hsl(222, 16%, 13%);
-  --s-subtle:  hsl(222, 14%, 17%);
-  --s-border:  hsl(218, 18%, 20%);
+  /* Surfaces — pure black family */
+  --s-base:    hsl(0, 0%, 2%);
+  --s-raised:  hsl(0, 0%, 5%);
+  --s-over:    hsl(0, 0%, 8%);
+  --s-subtle:  hsl(0, 0%, 12%);
+  --s-border:  rgba(255, 255, 255, 0.08);
 
-  --gold:         hsl(45, 96%, 54%);
-  --gold-dim:     hsl(45, 70%, 36%);
-  --gold-glow:    hsla(45, 96%, 54%, 0.14);
+  /* Accents */
+  --gold:        hsl(45, 90%, 58%);
+  --gold-dim:    hsl(45, 60%, 32%);
+  --gold-bright: hsl(45, 100%, 68%);
+  --gold-glow:   hsla(45, 90%, 58%, 0.08);
 
-  --mint:         hsl(165, 75%, 46%);
-  --mint-bg:      hsla(165, 75%, 46%, 0.08);
-  --mint-border:  hsla(165, 75%, 46%, 0.28);
+  --mint:        hsl(165, 65%, 44%);
+  --mint-bg:     hsla(165, 65%, 44%, 0.06);
+  --mint-border: hsla(165, 65%, 44%, 0.18);
 
-  --rust:         hsl(355, 78%, 60%);
-  --rust-bg:      hsla(355, 78%, 60%, 0.08);
-  --rust-border:  hsla(355, 78%, 60%, 0.28);
+  --rust:        hsl(355, 68%, 56%);
+  --rust-bg:     hsla(355, 68%, 56%, 0.06);
+  --rust-border: hsla(355, 68%, 56%, 0.18);
 
-  --t-ink:    hsl(215, 25%, 90%);
-  --t-2:      hsl(215, 14%, 54%);
-  --t-3:      hsl(215, 12%, 35%);
+  /* Text — crisp white scale */
+  --t-ink: #ffffff;
+  --t-2:   hsl(0, 0%, 55%);
+  --t-3:   hsl(0, 0%, 28%);
 
   --rail-w: 220px;
 }
@@ -43,31 +47,43 @@ html {
   text-rendering: optimizeLegibility;
 }
 
-/* ── Body — dot grid atmosphere ─────────────────────────── */
+/* ── Body ────────────────────────────────────────────────── */
 body {
   background-color: var(--s-base);
   color: var(--t-ink);
-  font-family: var(--font-ibm-plex-mono, "IBM Plex Mono", monospace);
+  font-family: var(--font-inter, "Inter", system-ui, sans-serif);
   font-size: 0.875rem;
   line-height: 1.6;
   min-height: 100dvh;
   overflow-x: hidden;
-  background-image: radial-gradient(
-    circle,
-    hsla(218, 18%, 22%, 0.55) 1px,
-    transparent 1px
-  );
-  background-size: 24px 24px;
 }
 
-/* Noise grain overlay — adds texture without color */
+/* Ambient radial glow — white center, fades out */
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 600px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse at center top,
+    rgba(255, 255, 255, 0.03) 0%,
+    transparent 70%
+  );
+}
+
+/* Subtle noise grain — keeps surfaces from feeling flat */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.038;
+  opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   background-repeat: repeat;
 }
@@ -76,29 +92,31 @@ body::after {
 .app-shell {
   display: flex;
   min-height: 100dvh;
+  position: relative;
+  z-index: 1;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--s-base); }
-::-webkit-scrollbar-thumb { background: var(--s-border); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-/* ── Typography utilities ───────────────────────────────── */
+/* ── Typography ─────────────────────────────────────────── */
 .font-display { font-family: var(--font-syne, "Syne", sans-serif); }
+.font-data    { font-family: var(--font-ibm-plex-mono, "IBM Plex Mono", monospace); }
 
-/* All-caps data label — the signature element */
 .label {
   display: block;
-  font-size: 0.6875rem;
+  font-family: var(--font-inter, "Inter", sans-serif);
+  font-size: 0.6rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--t-2);
+  color: var(--t-3);
   line-height: 1;
 }
 
-/* Large data number — Syne bold */
 .data-val {
   font-family: var(--font-syne, "Syne", sans-serif);
   font-weight: 700;
@@ -110,14 +128,42 @@ body::after {
 .tabular {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+  font-family: var(--font-ibm-plex-mono, monospace);
+}
+
+/* ── Glass card ─────────────────────────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+}
+
+.glass-card-sm {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+}
+
+/* ── 4-pointed star (sparkle) ───────────────────────────── */
+.spark {
+  display: inline-block;
+  background: currentColor;
+  clip-path: polygon(
+    50% 0%,   53% 47%,
+    100% 50%, 53% 53%,
+    50% 100%, 47% 53%,
+    0% 50%,   47% 47%
+  );
 }
 
 /* ── Skeleton shimmer ───────────────────────────────────── */
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: var(--s-subtle);
-  border-radius: 2px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
   display: inline-block;
 }
 .skeleton::after {
@@ -127,11 +173,11 @@ body::after {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    hsla(218, 18%, 30%, 0.7) 50%,
+    rgba(255,255,255,0.06) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.8s linear infinite;
+  animation: shimmer 2s linear infinite;
 }
 
 @keyframes shimmer {
@@ -139,18 +185,18 @@ body::after {
   100% { background-position:  200% 0; }
 }
 
-/* ── Stagger enter animations ───────────────────────────── */
-.animate-enter          { animation: fade-up 0.45s ease-out both; }
-.delay-50               { animation-delay: 50ms;  }
-.delay-100              { animation-delay: 100ms; }
-.delay-150              { animation-delay: 150ms; }
-.delay-200              { animation-delay: 200ms; }
-.delay-250              { animation-delay: 250ms; }
-.delay-300              { animation-delay: 300ms; }
-.delay-400              { animation-delay: 400ms; }
+/* ── Enter animations ───────────────────────────────────── */
+.animate-enter   { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+.delay-50        { animation-delay: 50ms;  }
+.delay-100       { animation-delay: 100ms; }
+.delay-150       { animation-delay: 150ms; }
+.delay-200       { animation-delay: 200ms; }
+.delay-250       { animation-delay: 250ms; }
+.delay-300       { animation-delay: 300ms; }
+.delay-400       { animation-delay: 400ms; }
 
 @keyframes fade-up {
-  0%   { opacity: 0; transform: translateY(14px); }
+  0%   { opacity: 0; transform: translateY(20px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
@@ -167,10 +213,10 @@ body::after {
   100% { color: var(--t-ink); }
 }
 
-/* ── Table row hover — left gold indicator ──────────────── */
+/* ── Table row hover ────────────────────────────────────── */
 .row-hover {
   position: relative;
-  transition: background 130ms ease;
+  transition: background 120ms ease;
   cursor: default;
 }
 .row-hover::before {
@@ -178,13 +224,13 @@ body::after {
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 2px;
-  background: var(--gold);
+  background: rgba(255,255,255,0.15);
   transform: scaleY(0);
   transform-origin: center;
-  transition: transform 130ms ease;
+  transition: transform 120ms ease;
 }
 .row-hover:hover {
-  background: hsla(218, 18%, 13%, 0.8);
+  background: rgba(255,255,255,0.03);
 }
 .row-hover:hover::before {
   transform: scaleY(1);
@@ -194,72 +240,66 @@ body::after {
 .badge {
   display: inline-flex;
   align-items: center;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 2px 5px;
+  padding: 2px 7px;
   border: 1px solid;
-  border-radius: 2px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 .badge-itm  { color: var(--mint); border-color: var(--mint-border); background: var(--mint-bg); }
 .badge-otm  { color: var(--rust); border-color: var(--rust-border); background: var(--rust-bg); }
 .badge-atm  { color: var(--gold); border-color: var(--gold-glow);   background: var(--gold-glow); }
 .badge-live {
-  color: hsl(215 80% 72%);
-  border-color: hsl(215 80% 72% / 0.28);
-  background: hsl(215 80% 72% / 0.08);
+  color: rgba(255,255,255,0.7);
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
 }
-.badge-claim {
-  color: var(--mint);
-  border-color: var(--mint-border);
-  background: var(--mint-bg);
-}
-.badge-expired {
-  color: var(--t-2);
-  border-color: var(--s-border);
-  background: transparent;
-}
+.badge-claim   { color: var(--mint); border-color: var(--mint-border); background: var(--mint-bg); }
+.badge-expired { color: var(--t-2);  border-color: rgba(255,255,255,0.07); background: transparent; }
 
-/* ── Thin divider ───────────────────────────────────────── */
-.divider { height: 1px; background: var(--s-border); }
+/* ── Dividers ───────────────────────────────────────────── */
+.divider { height: 1px; background: rgba(255,255,255,0.06); }
 
-/* ── Gold top-accent on sections ───────────────────────── */
+/* ── Gold top-accent ────────────────────────────────────── */
 .gold-cap {
-  height: 2px;
-  background: linear-gradient(90deg, var(--gold) 0%, transparent 60%);
-  border-radius: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 60%);
 }
 
 /* ── Utilization bar ────────────────────────────────────── */
 .util-track {
-  height: 3px;
-  background: var(--s-border);
+  height: 2px;
+  background: rgba(255,255,255,0.07);
   overflow: hidden;
+  border-radius: 999px;
 }
 .util-fill {
   height: 100%;
   background: var(--gold);
-  transition: width 0.6s cubic-bezier(0.2, 0, 0.1, 1);
+  border-radius: 999px;
+  transition: width 0.7s cubic-bezier(0.2, 0, 0.1, 1);
 }
 
-/* ── Tab underline nav ──────────────────────────────────── */
-.tab-nav { display: flex; border-bottom: 1px solid var(--s-border); gap: 0; }
+/* ── Tab nav ────────────────────────────────────────────── */
+.tab-nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.07); gap: 2px; }
 .tab-item {
-  padding: 8px 16px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  padding: 10px 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--t-2);
-  border-bottom: 2px solid transparent;
+  border-bottom: 1px solid transparent;
   margin-bottom: -1px;
   cursor: pointer;
-  transition: color 130ms ease, border-color 130ms ease;
+  transition: color 120ms ease, border-color 120ms ease;
+  border-radius: 4px 4px 0 0;
 }
-.tab-item:hover   { color: var(--t-ink); }
-.tab-item.active  { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-item:hover  { color: var(--t-ink); }
+.tab-item.active { color: var(--t-ink); border-bottom-color: rgba(255,255,255,0.5); }
 
 /* ── Mobile bottom nav ──────────────────────────────────── */
 .mobile-nav {
@@ -267,14 +307,32 @@ body::after {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 40;
-  background: var(--s-raised);
-  border-top: 1px solid var(--s-border);
+  background: rgba(5, 5, 5, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.07);
 }
 
 @media (max-width: 1023px) {
   .mobile-nav { display: flex; }
 }
 
-/* ── Vault position bar ─────────────────────────────────── */
-.pos-bar-call { border-left: 3px solid var(--mint); }
-.pos-bar-put  { border-left: 3px solid var(--rust); }
+/* ── Position side-bar accent ───────────────────────────── */
+.pos-bar-call { border-left: 2px solid var(--mint); }
+.pos-bar-put  { border-left: 2px solid var(--rust); }
+
+/* ── Stat section left-accent ───────────────────────────── */
+.stat-left-accent {
+  border-left: 1px solid rgba(255,255,255,0.12);
+  padding-left: 16px;
+}
+
+/* ── Flow step (editorial numbered section) ─────────────── */
+.flow-step-num {
+  font-family: var(--font-syne, "Syne", sans-serif);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--t-3);
+  text-transform: uppercase;
+}
