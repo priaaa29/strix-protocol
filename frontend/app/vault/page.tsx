@@ -5,6 +5,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { VaultStats } from '@/components/VaultStats';
 import { VaultDeposit } from '@/components/VaultDeposit';
 import { VaultWithdraw } from '@/components/VaultWithdraw';
+import { RiskDisclaimer } from '@/components/RiskDisclaimer';
 
 export default function VaultPage() {
   const { wallet } = useWallet();
@@ -12,6 +13,7 @@ export default function VaultPage() {
 
   return (
     <div className="space-y-7 animate-enter">
+      <RiskDisclaimer variant="vault" />
 
       {/* ── Header ──────────────────────────────────────── */}
       <div>
