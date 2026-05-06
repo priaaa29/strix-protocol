@@ -1,9 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { redirect } from 'next/navigation';
 import { TEST_ACCOUNTS, EXPLORER_URL, type TestAccount } from '@/lib/test-accounts';
 import { cn } from '@/lib/utils';
-import { NETWORK_CONFIG } from '@/lib/constants';
+import { NETWORK_CONFIG, ACTIVE_NETWORK } from '@/lib/constants';
+
+// Explorer is a testnet-only dev tool — redirect on mainnet
+if (ACTIVE_NETWORK === 'mainnet') {
+  redirect('/');
+}
 
 // ── Avatar colors cycling through brand palette ─────────────────────────────
 const AVATAR_COLORS = [
@@ -177,23 +183,35 @@ function AccountCard({ acc, index, state, isShown, copied, avatarColor, onCopy, 
     )}>
 
       {/* Card header */}
-      <div className="px-4 py-4 flex items-center gap-3 border-b border-surface-border bg-surface-over">
-        <div className={cn(
-          "w-9 h-9 rounded-sm border flex items-center justify-center",
-          "font-display text-[15px] font-bold shrink-0",
-          avatarColor
-        )}>
-          {acc.name[0]}
+      <div className="px-4 py-4 border-b border-surface-border bg-surface-over">
+        <div className="flex items-start gap-3">
+          <div className={cn(
+            "w-10 h-10 rounded-sm border flex items-center justify-center",
+            "font-display text-[13px] font-bold shrink-0 tracking-tight",
+            avatarColor
+          )}>
+            {acc.initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="font-display text-[13px] font-bold text-ink tracking-tight">{acc.name}</div>
+              {acc.funded && (
+                <span className="px-2 py-0.5 rounded-full bg-mint/15 border border-mint/30 text-mint text-[9px] font-semibold tracking-widest uppercase">
+                  Funded
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] text-ink-3 font-mono tracking-wider mt-0.5">@{acc.handle}</div>
+          </div>
         </div>
-        <div className="min-w-0">
-          <div className="font-display text-[13px] font-bold text-ink tracking-tight">{acc.name}</div>
-          <div className="text-[10px] text-ink-3 font-mono tracking-wider uppercase mt-0.5">{acc.role}</div>
+        <div className="mt-3 space-y-1.5">
+          <p className="text-[11px] text-ink-2 leading-relaxed">{acc.bio}</p>
+          <div className="flex items-center gap-3 flex-wrap pt-0.5">
+            <span className="text-[10px] text-ink-3 font-mono uppercase tracking-wider">{acc.role}</span>
+            <span className="text-[10px] text-ink-3">·</span>
+            <span className="text-[10px] text-ink-3">{acc.location}</span>
+          </div>
         </div>
-        {acc.funded && (
-          <span className="ml-auto shrink-0 px-2 py-0.5 rounded-full bg-mint/15 border border-mint/30 text-mint text-[9px] font-semibold tracking-widest uppercase">
-            Funded
-          </span>
-        )}
       </div>
 
       {/* XLM Balance */}
