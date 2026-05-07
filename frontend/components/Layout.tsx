@@ -96,7 +96,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="px-5 pt-6 pb-5">
           <Link href="/" className="flex items-center gap-3 group">
-            <StrixMark />
+            <div className="logo-glow">
+              <StrixMark />
+            </div>
             <div className="leading-none">
               <span className="font-display text-[15px] font-bold tracking-[-0.01em] text-white">
                 STRIX
