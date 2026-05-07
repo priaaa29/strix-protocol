@@ -5,6 +5,7 @@ members = [
     "option-market",
     "integration-tests",
     "mock-oracle",
+    "mock-usdc",
 ]
 resolver = "2"
 
