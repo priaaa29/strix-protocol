@@ -49,7 +49,17 @@ html {
 
 /* ── Body ────────────────────────────────────────────────── */
 body {
-  background-color: var(--s-base);
+  background-color: #000;
+  /* Stage-light gradient — lifted dark-gray crown fades to pure black at edges.
+     background-attachment: fixed keeps it anchored while content scrolls. */
+  background-image:
+    radial-gradient(
+      ellipse 130% 75% at 50% -5%,
+      hsl(0, 0%, 11%) 0%,
+      hsl(0, 0%, 5%)  30%,
+      transparent     62%
+    );
+  background-attachment: fixed;
   color: var(--t-ink);
   font-family: var(--font-inter, "Inter", system-ui, sans-serif);
   font-size: 0.875rem;
@@ -58,22 +68,29 @@ body {
   overflow-x: hidden;
 }
 
-/* Ambient radial glow — white center, fades out */
+/* Ambient white glow — breathes over the stage-light gradient */
 body::before {
   content: '';
   position: fixed;
-  top: -200px;
+  top: -250px;
   left: 50%;
   transform: translateX(-50%);
-  width: 900px;
-  height: 600px;
+  width: 1200px;
+  height: 800px;
   pointer-events: none;
   z-index: 0;
   background: radial-gradient(
     ellipse at center top,
-    rgba(255, 255, 255, 0.03) 0%,
-    transparent 70%
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.025) 30%,
+    transparent 65%
   );
+  animation: ambient-breathe 9s ease-in-out infinite alternate;
+}
+
+@keyframes ambient-breathe {
+  from { opacity: 0.65; transform: translateX(-50%) scale(1); }
+  to   { opacity: 1;    transform: translateX(-50%) scale(1.08); }
 }
 
 /* Subtle noise grain — keeps surfaces from feeling flat */
@@ -133,11 +150,47 @@ body::after {
 
 /* ── Glass card ─────────────────────────────────────────── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%),
+    rgba(255,255,255,0.015);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 24px 48px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(0,0,0,0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine sweep on hover */
+.glass-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -75%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255,255,255,0)    0%,
+    rgba(255,255,255,0.07) 50%,
+    rgba(255,255,255,0)    100%
+  );
+  transform: skewX(-15deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-card:hover::after {
+  animation: glass-shine 0.65s ease forwards;
+}
+
+@keyframes glass-shine {
+  from { left: -75%; }
+  to   { left: 125%; }
 }
 
 .glass-card-sm {
@@ -186,18 +239,93 @@ body::after {
 }
 
 /* ── Enter animations ───────────────────────────────────── */
-.animate-enter   { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both; }
-.delay-50        { animation-delay: 50ms;  }
-.delay-100       { animation-delay: 100ms; }
-.delay-150       { animation-delay: 150ms; }
-.delay-200       { animation-delay: 200ms; }
-.delay-250       { animation-delay: 250ms; }
-.delay-300       { animation-delay: 300ms; }
-.delay-400       { animation-delay: 400ms; }
+.animate-enter    { animation: fade-up    0.5s  cubic-bezier(0.16,1,0.3,1) both; }
+.animate-enter-3d { animation: fade-up-3d 0.65s cubic-bezier(0.16,1,0.3,1) both; }
+.delay-50         { animation-delay: 50ms;  }
+.delay-100        { animation-delay: 100ms; }
+.delay-150        { animation-delay: 150ms; }
+.delay-200        { animation-delay: 200ms; }
+.delay-250        { animation-delay: 250ms; }
+.delay-300        { animation-delay: 300ms; }
+.delay-400        { animation-delay: 400ms; }
 
 @keyframes fade-up {
   0%   { opacity: 0; transform: translateY(20px); }
   100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-up-3d {
+  0%   { opacity: 0; transform: perspective(900px) translateY(30px) rotateX(5deg); }
+  100% { opacity: 1; transform: perspective(900px) translateY(0)    rotateX(0deg); }
+}
+
+/* ── Star animations ────────────────────────────────────── */
+.star-rotate {
+  animation: star-rotate 25s linear infinite;
+  transform-origin: center;
+}
+
+.star-rotate-reverse {
+  animation: star-rotate 38s linear infinite reverse;
+  transform-origin: center;
+}
+
+.star-rotate-slow {
+  animation: star-rotate 55s linear infinite;
+  transform-origin: center;
+}
+
+.star-pulse {
+  animation: star-pulse 4s ease-in-out infinite;
+}
+
+@keyframes star-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes star-pulse {
+  0%, 100% { opacity: 0.07; filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+  50%       { opacity: 0.16; filter: drop-shadow(0 0 14px rgba(255,255,255,0.3)); }
+}
+
+/* ── Float animation (for product card) ─────────────────── */
+.card-float {
+  animation: card-float 6s ease-in-out infinite;
+}
+
+@keyframes card-float {
+  0%, 100% { transform: perspective(900px) rotateY(-16deg) rotateX(4deg) translateY(0px); }
+  50%       { transform: perspective(900px) rotateY(-16deg) rotateX(4deg) translateY(-10px); }
+}
+
+/* ── Glow star animations ───────────────────────────────── */
+.glow-star-float {
+  animation: glow-float 9s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.glow-star-spin {
+  animation: star-rotate 42s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes glow-float {
+  0%   { transform: translateY(0px)   scale(1);    }
+  33%  { transform: translateY(-14px) scale(1.02); }
+  66%  { transform: translateY(-6px)  scale(0.99); }
+  100% { transform: translateY(0px)   scale(1);    }
+}
+
+/* ── Logo glow ──────────────────────────────────────────── */
+.logo-glow {
+  animation: logo-glow 6s ease-in-out infinite;
+}
+
+@keyframes logo-glow {
+  0%, 100% { filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+  50%       { filter: drop-shadow(0 0 8px rgba(255,255,255,0.25)); }
 }
 
 /* ── Price flash ────────────────────────────────────────── */
