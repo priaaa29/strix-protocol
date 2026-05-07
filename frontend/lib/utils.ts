@@ -51,15 +51,11 @@ export function formatSharePrice(price: bigint): string {
 }
 
 /** Format a timestamp as a human-readable date/time. */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as const;
+
 export function formatExpiry(ts: number): string {
-  return new Date(ts * 1000).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  });
+  const d = new Date(ts * 1000);
+  return `Fri, ${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()} · 16:00 UTC`;
 }
 
 /** Format a timestamp as a countdown string, e.g. "2d 4h 30m". */
