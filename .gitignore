@@ -21,6 +21,8 @@ backend/.env
 # Database
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 
 # OS
 .DS_Store
