@@ -53,11 +53,11 @@ export function VaultWithdraw({ walletAddress }: VaultWithdrawProps) {
   if (!walletAddress || (lpInfo?.shares ?? 0n) === 0n) {
     return (
       <div className="py-8 text-center space-y-1">
-        <p className="text-sm text-ink-2">
+        <p className="text-white/40 text-sm font-sans">
           {!walletAddress ? 'Connect wallet to withdraw' : 'No vault shares to withdraw'}
         </p>
         {walletAddress && (
-          <p className="text-[11px] text-ink-3">Deposit USDC first to receive shares</p>
+          <p className="text-[11px] text-white/22 font-sans">Deposit USDC first to receive shares</p>
         )}
       </div>
     );
@@ -71,9 +71,9 @@ export function VaultWithdraw({ walletAddress }: VaultWithdrawProps) {
             { label: 'Your Shares', value: formatUsdc(lpInfo.shares, 4) },
             { label: 'USDC Value',  value: `$${formatUsdc(lpInfo.usdcValue, 2)}` },
           ].map((item) => (
-            <div key={item.label} className="bg-surface-over border border-surface-border rounded-sm px-3 py-2.5">
-              <span className="label">{item.label}</span>
-              <p className="font-mono text-sm text-ink mt-1 tabular">{item.value}</p>
+            <div key={item.label} className="bg-white/[0.04] border border-white/[0.07] rounded-xl px-4 py-3">
+              <span className="label mb-1">{item.label}</span>
+              <p className="font-data text-[13px] text-white/75 tabular mt-1">{item.value}</p>
             </div>
           ))}
         </div>
@@ -100,16 +100,16 @@ export function VaultWithdraw({ walletAddress }: VaultWithdrawProps) {
       />
 
       {usdcPreview > 0n && !wouldExceedAvailable && (
-        <div className="flex items-center justify-between border border-gold/30 bg-gold/[0.06] rounded-sm px-4 py-2.5">
-          <span className="label text-gold/80">You Receive</span>
-          <span className="font-mono text-sm text-gold tabular font-semibold">
+        <div className="flex items-center justify-between border border-gold/25 bg-gold/[0.05] rounded-xl px-4 py-3">
+          <span className="label text-gold/70">You Receive</span>
+          <span className="font-data text-[13px] text-gold tabular font-semibold">
             ${formatUsdc(usdcPreview, 4)} USDC
           </span>
         </div>
       )}
 
       {wouldExceedAvailable && (
-        <div className="border border-gold/30 bg-gold/[0.06] rounded-sm px-4 py-3 text-[11px] text-gold leading-relaxed">
+        <div className="border border-gold/25 bg-gold/[0.05] rounded-xl px-4 py-3 text-[11px] text-gold/75 leading-relaxed font-sans">
           Some capital is locked backing active options. Reduce withdrawal or wait for expiry.
         </div>
       )}

@@ -14,7 +14,7 @@ interface VaultDepositProps {
 
 export function VaultDeposit({ walletAddress }: VaultDepositProps) {
   const { vaultInfo, deposit } = useVault(walletAddress);
-  const [amount, setAmount]   = useState('');
+  const [amount, setAmount]     = useState('');
   const [txResult, setTxResult] = useState<TxResult | null>(null);
   const [loading, setLoading]   = useState(false);
 
@@ -42,12 +42,12 @@ export function VaultDeposit({ walletAddress }: VaultDepositProps) {
       {vaultInfo && (
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: 'Share Price',  value: `$${formatSharePrice(vaultInfo.sharePrice)}` },
-            { label: 'Available',    value: `$${formatUsdc(vaultInfo.available, 2)}` },
+            { label: 'Share Price', value: `$${formatSharePrice(vaultInfo.sharePrice)}` },
+            { label: 'Available',   value: `$${formatUsdc(vaultInfo.available, 2)}` },
           ].map((item) => (
-            <div key={item.label} className="bg-surface-over border border-surface-border rounded-sm px-3 py-2.5">
-              <span className="label">{item.label}</span>
-              <p className="font-mono text-sm text-ink mt-1 tabular">{item.value}</p>
+            <div key={item.label} className="bg-white/[0.04] border border-white/[0.07] rounded-xl px-4 py-3">
+              <span className="label mb-1">{item.label}</span>
+              <p className="font-data text-[13px] text-white/75 tabular mt-1">{item.value}</p>
             </div>
           ))}
         </div>
@@ -65,9 +65,9 @@ export function VaultDeposit({ walletAddress }: VaultDepositProps) {
       />
 
       {sharesPreview > 0n && (
-        <div className="flex items-center justify-between border border-gold/30 bg-gold/[0.06] rounded-sm px-4 py-2.5">
-          <span className="label text-gold/80">You Receive</span>
-          <span className="font-mono text-sm text-gold tabular font-semibold">
+        <div className="flex items-center justify-between border border-gold/25 bg-gold/[0.05] rounded-xl px-4 py-3">
+          <span className="label text-gold/70">You Receive</span>
+          <span className="font-data text-[13px] text-gold tabular font-semibold">
             {formatUsdc(sharesPreview, 4)} shares
           </span>
         </div>
@@ -76,7 +76,7 @@ export function VaultDeposit({ walletAddress }: VaultDepositProps) {
       <TransactionStatus result={txResult} />
 
       {!walletAddress ? (
-        <p className="text-center text-[11px] text-ink-3 uppercase tracking-wider py-2">
+        <p className="text-center text-[11px] text-white/25 uppercase tracking-wider py-2 font-sans">
           Connect wallet to deposit
         </p>
       ) : (
