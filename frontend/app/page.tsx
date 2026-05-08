@@ -76,20 +76,45 @@ export default function Dashboard() {
           aria-hidden
         />
 
-        {/* CSS glow orb — always visible fallback behind the SVG star */}
+        {/* Mobile star — pure CSS drop-shadow, no SVG filters, works everywhere */}
         <div
-          className="pointer-events-none select-none absolute right-[-30px] sm:right-4 lg:right-8 top-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] lg:w-[560px] lg:h-[560px] rounded-full"
-          style={{
-            zIndex: 2,
-            background: 'radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 35%, transparent 65%)',
-          }}
+          className="sm:hidden pointer-events-none select-none absolute right-[-30px] top-1/2 -translate-y-1/2"
+          style={{ zIndex: 3, width: 300, height: 300 }}
           aria-hidden
-        />
+        >
+          <svg viewBox="-140 -160 280 300" width="300" height="300" style={{ overflow: 'visible' }}>
+            <defs>
+              <radialGradient id="mob-star-fill" cx="36%" cy="26%" r="72%">
+                <stop offset="0%"   stopColor="#ffffff" stopOpacity="1" />
+                <stop offset="18%"  stopColor="#d8e4ff" stopOpacity="1" />
+                <stop offset="50%"  stopColor="#6070a8" stopOpacity="1" />
+                <stop offset="100%" stopColor="#0a0a18" stopOpacity="0.9" />
+              </radialGradient>
+            </defs>
+            <path
+              d="M 0,-140 L 9,-9 L 110,0 L 9,9 L 0,85 L -9,9 L -110,0 L -9,-9 Z"
+              fill="url(#mob-star-fill)"
+              style={{
+                filter:
+                  'drop-shadow(0 0 18px rgba(255,255,255,0.95)) ' +
+                  'drop-shadow(0 0 45px rgba(200,215,255,0.70)) ' +
+                  'drop-shadow(0 0 90px rgba(180,200,255,0.40))',
+              }}
+            />
+            {/* Bright center core */}
+            <circle cx="0" cy="0" r="5" fill="white"
+              style={{ filter: 'drop-shadow(0 0 8px white)' }} />
+            {/* Top tip flare */}
+            <circle cx="0" cy="-140" r="3.5" fill="white"
+              style={{ filter: 'drop-shadow(0 0 6px white)' }} />
+          </svg>
+        </div>
 
-        {/* Chrome glow star — responsive across all breakpoints */}
+        {/* Tablet + desktop — full chrome GlowStar */}
         <div
-          className="pointer-events-none select-none absolute right-[-30px] sm:right-4 lg:right-8 top-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] lg:w-[520px] lg:h-[520px]"
-          style={{ zIndex: 3, opacity: 0.85 }}
+          className="hidden sm:block pointer-events-none select-none absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 w-[380px] h-[380px] lg:w-[520px] lg:h-[520px]"
+          style={{ zIndex: 3, opacity: 0.88 }}
+          aria-hidden
         >
           <GlowStar className="w-full h-full" />
         </div>
