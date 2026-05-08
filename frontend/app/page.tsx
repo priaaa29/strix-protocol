@@ -76,37 +76,38 @@ export default function Dashboard() {
           aria-hidden
         />
 
-        {/* Mobile star — pure CSS drop-shadow, no SVG filters, works everywhere */}
+        {/* Mobile star — CSS background glow + plain white star, zero filters */}
         <div
-          className="sm:hidden pointer-events-none select-none absolute right-[-30px] top-1/2 -translate-y-1/2"
-          style={{ zIndex: 3, width: 300, height: 300 }}
+          className="sm:hidden pointer-events-none select-none absolute right-0 top-1/2 -translate-y-1/2"
+          style={{ zIndex: 3, width: 280, height: 280 }}
           aria-hidden
         >
-          <svg viewBox="-140 -160 280 300" width="300" height="300" style={{ overflow: 'visible' }}>
-            <defs>
-              <radialGradient id="mob-star-fill" cx="36%" cy="26%" r="72%">
-                <stop offset="0%"   stopColor="#ffffff" stopOpacity="1" />
-                <stop offset="18%"  stopColor="#d8e4ff" stopOpacity="1" />
-                <stop offset="50%"  stopColor="#6070a8" stopOpacity="1" />
-                <stop offset="100%" stopColor="#0a0a18" stopOpacity="0.9" />
-              </radialGradient>
-            </defs>
+          {/* CSS radial-gradient glow — no filter property, always renders */}
+          <div style={{
+            position: 'absolute',
+            inset: '-60px',
+            borderRadius: '50%',
+            background:
+              'radial-gradient(circle, ' +
+              'rgba(255,255,255,0.30) 0%, ' +
+              'rgba(200,215,255,0.15) 30%, ' +
+              'rgba(150,170,255,0.06) 58%, ' +
+              'transparent 75%)',
+          }} />
+          {/* Plain white 4-pointed star — no SVG filters, no CSS filters */}
+          <svg
+            viewBox="-110 -130 220 230"
+            width="280"
+            height="280"
+            style={{ position: 'relative', display: 'block' }}
+          >
             <path
-              d="M 0,-140 L 9,-9 L 110,0 L 9,9 L 0,85 L -9,9 L -110,0 L -9,-9 Z"
-              fill="url(#mob-star-fill)"
-              style={{
-                filter:
-                  'drop-shadow(0 0 18px rgba(255,255,255,0.95)) ' +
-                  'drop-shadow(0 0 45px rgba(200,215,255,0.70)) ' +
-                  'drop-shadow(0 0 90px rgba(180,200,255,0.40))',
-              }}
+              d="M 0,-120 L 8,-8 L 100,0 L 8,8 L 0,75 L -8,8 L -100,0 L -8,-8 Z"
+              fill="white"
+              opacity="0.82"
             />
-            {/* Bright center core */}
-            <circle cx="0" cy="0" r="5" fill="white"
-              style={{ filter: 'drop-shadow(0 0 8px white)' }} />
-            {/* Top tip flare */}
-            <circle cx="0" cy="-140" r="3.5" fill="white"
-              style={{ filter: 'drop-shadow(0 0 6px white)' }} />
+            <circle cx="0" cy="0" r="6" fill="white" />
+            <circle cx="0" cy="-120" r="3" fill="white" opacity="0.9" />
           </svg>
         </div>
 
