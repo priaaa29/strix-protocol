@@ -219,35 +219,42 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       </aside>
 
-      {/* ─────────────── MOBILE TOP BAR ──────────────────── */}
-      <header className={cn(
-        "lg:hidden sticky top-0 z-30 w-full",
-        "bg-[rgba(5,5,5,0.88)] backdrop-blur-xl",
-        "border-b border-white/[0.06]",
-        "flex items-center justify-between px-4 h-14"
-      )}>
-        <Link href="/" className="flex items-center gap-2.5">
-          <StrixMark compact />
-          <span className="font-display text-[14px] font-bold tracking-tight text-white">STRIX</span>
-        </Link>
-        {priceStr && (
-          <span className={cn(
-            "font-display text-[13px] font-bold text-white tabular",
-            flash === 'up' && "price-flash-up",
-            flash === 'down' && "price-flash-down",
-          )}>
-            ${priceStr}
-          </span>
-        )}
-        <WalletConnect compact />
-      </header>
+      {/* ─────────────── CONTENT COLUMN (mobile: full width) ── */}
+      <div className="flex-1 min-w-0 flex flex-col">
 
-      {/* ─────────────── MAIN CONTENT ────────────────────── */}
-      <main className="flex-1 min-w-0 min-h-screen">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8 py-10 pb-28 lg:pb-14">
-          {children}
-        </div>
-      </main>
+        {/* Mobile top bar — stacks above main in the column */}
+        <header className={cn(
+          "lg:hidden sticky top-0 z-30",
+          "bg-[rgba(5,5,5,0.88)] backdrop-blur-xl",
+          "border-b border-white/[0.06]",
+          "flex items-center justify-between px-4 h-14 gap-3"
+        )}>
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <StrixMark compact />
+            <span className="font-display text-[14px] font-bold tracking-tight text-white">STRIX</span>
+          </Link>
+          {priceStr && (
+            <span className={cn(
+              "font-display text-[13px] font-bold text-white tabular",
+              flash === 'up' && "price-flash-up",
+              flash === 'down' && "price-flash-down",
+            )}>
+              ${priceStr}
+            </span>
+          )}
+          <div className="shrink-0">
+            <WalletConnect compact />
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 min-w-0">
+          <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 pb-28 lg:pb-14">
+            {children}
+          </div>
+        </main>
+
+      </div>{/* end content column */}
 
       {/* ─────────────── MOBILE BOTTOM NAV ───────────────── */}
       <nav className="mobile-nav" aria-label="Mobile navigation">

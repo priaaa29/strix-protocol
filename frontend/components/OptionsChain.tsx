@@ -107,111 +107,121 @@ export function OptionsChain({ walletAddress }: OptionsChainProps) {
         </div>
       ) : (
         <div className="glass-card overflow-hidden">
+          {/* Scroll wrapper — enables horizontal scroll on mobile */}
+          <div className="overflow-x-auto">
+            <div className="min-w-[500px]">
 
-          {/* Column headers */}
-          <div className="grid grid-cols-[1fr_1fr_64px_1fr_96px] lg:grid-cols-[1fr_1fr_80px_1fr_120px] bg-white/[0.03] border-b border-white/[0.07]">
-            {[
-              { label: 'Strike',       cls: '' },
-              { label: 'Call Premium', cls: 'text-right text-mint/60' },
-              { label: '',             cls: 'text-center' },
-              { label: 'Put Premium',  cls: 'text-right text-rust/60' },
-              { label: '',             cls: '' },
-            ].map((col, i) => (
-              <div key={i} className={`px-4 py-3 ${col.cls}`}>
-                {col.label && <span className={`label ${col.cls.includes('mint') ? 'text-mint/60' : col.cls.includes('rust') ? 'text-rust/60' : ''}`}>{col.label}</span>}
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_1fr_64px_1fr_96px] lg:grid-cols-[1fr_1fr_80px_1fr_120px] bg-white/[0.03] border-b border-white/[0.07]">
+                {[
+                  { label: 'Strike',       cls: '' },
+                  { label: 'Call Premium', cls: 'text-right' },
+                  { label: '',             cls: 'text-center' },
+                  { label: 'Put Premium',  cls: 'text-right' },
+                  { label: '',             cls: '' },
+                ].map((col, i) => (
+                  <div key={i} className={`px-4 py-3 ${col.cls}`}>
+                    {col.label && (
+                      <span className={`label ${i === 1 ? 'text-mint/60' : i === 3 ? 'text-rust/60' : ''}`}>
+                        {col.label}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Rows */}
-          {sortedStrikes.map((row) => {
-            const priceDiff = spotPrice > 0n
-              ? Math.abs(Number(row.strike - spotPrice)) / Number(spotPrice)
-              : 1;
-            const isAtm   = priceDiff < 0.005;
-            const callItm = row.strike < spotPrice;
-            const putItm  = row.strike > spotPrice;
-            const callMono = isAtm ? 'ATM' : callItm ? 'ITM' : 'OTM';
-            const putMono  = isAtm ? 'ATM' : putItm  ? 'ITM' : 'OTM';
+              {/* Rows */}
+              {sortedStrikes.map((row) => {
+                const priceDiff = spotPrice > 0n
+                  ? Math.abs(Number(row.strike - spotPrice)) / Number(spotPrice)
+                  : 1;
+                const isAtm   = priceDiff < 0.005;
+                const callItm = row.strike < spotPrice;
+                const putItm  = row.strike > spotPrice;
+                const callMono = isAtm ? 'ATM' : callItm ? 'ITM' : 'OTM';
+                const putMono  = isAtm ? 'ATM' : putItm  ? 'ITM' : 'OTM';
 
-            return (
-              <div
-                key={row.strike.toString()}
-                className={[
-                  'row-hover',
-                  'grid grid-cols-[1fr_1fr_64px_1fr_96px] lg:grid-cols-[1fr_1fr_80px_1fr_120px]',
-                  'border-b border-white/[0.05] last:border-b-0',
-                  isAtm ? 'bg-gold/[0.03]' : '',
-                ].join(' ')}
-              >
-                {/* Strike */}
-                <div className="px-4 py-3 flex items-center gap-2">
-                  <span className={`font-data text-[12px] tabular font-medium ${isAtm ? 'text-gold' : 'text-white/70'}`}>
-                    ${formatUsdc(row.strike, 4)}
-                  </span>
-                  {isAtm && <span className="badge badge-atm hidden sm:inline-flex">ATM</span>}
-                </div>
+                return (
+                  <div
+                    key={row.strike.toString()}
+                    className={[
+                      'row-hover',
+                      'grid grid-cols-[1fr_1fr_64px_1fr_96px] lg:grid-cols-[1fr_1fr_80px_1fr_120px]',
+                      'border-b border-white/[0.05] last:border-b-0',
+                      isAtm ? 'bg-gold/[0.03]' : '',
+                    ].join(' ')}
+                  >
+                    {/* Strike */}
+                    <div className="px-4 py-3 flex items-center gap-2">
+                      <span className={`font-data text-[12px] tabular font-medium ${isAtm ? 'text-gold' : 'text-white/70'}`}>
+                        ${formatUsdc(row.strike, 4)}
+                      </span>
+                      {isAtm && <span className="badge badge-atm hidden sm:inline-flex">ATM</span>}
+                    </div>
 
-                {/* Call premium */}
-                <div className="px-4 py-3 flex items-center justify-end">
-                  {row.callPremium > 0n ? (
-                    <span className={`font-data text-[12px] tabular ${callItm ? 'text-mint' : 'text-white/30'}`}>
-                      ${formatUsdc(row.callPremium, 4)}
-                    </span>
-                  ) : (
-                    <span className="skeleton h-4 w-14" />
-                  )}
-                </div>
+                    {/* Call premium */}
+                    <div className="px-4 py-3 flex items-center justify-end">
+                      {row.callPremium > 0n ? (
+                        <span className={`font-data text-[12px] tabular ${callItm ? 'text-mint' : 'text-white/30'}`}>
+                          ${formatUsdc(row.callPremium, 4)}
+                        </span>
+                      ) : (
+                        <span className="skeleton h-4 w-14" />
+                      )}
+                    </div>
 
-                {/* Moneyness badge */}
-                <div className="py-3 flex items-center justify-center gap-1">
-                  <span className={`badge hidden sm:inline-flex ${
-                    callMono === 'ITM' ? 'badge-itm' :
-                    callMono === 'ATM' ? 'badge-atm' : 'badge-otm'
-                  }`}>
-                    C:{callMono}
-                  </span>
-                </div>
+                    {/* Moneyness badge */}
+                    <div className="py-3 flex items-center justify-center gap-1">
+                      <span className={`badge hidden sm:inline-flex ${
+                        callMono === 'ITM' ? 'badge-itm' :
+                        callMono === 'ATM' ? 'badge-atm' : 'badge-otm'
+                      }`}>
+                        C:{callMono}
+                      </span>
+                    </div>
 
-                {/* Put premium */}
-                <div className="px-4 py-3 flex items-center justify-end">
-                  {row.putPremium > 0n ? (
-                    <span className={`font-data text-[12px] tabular ${putItm ? 'text-rust' : 'text-white/30'}`}>
-                      ${formatUsdc(row.putPremium, 4)}
-                    </span>
-                  ) : (
-                    <span className="skeleton h-4 w-14" />
-                  )}
-                </div>
+                    {/* Put premium */}
+                    <div className="px-4 py-3 flex items-center justify-end">
+                      {row.putPremium > 0n ? (
+                        <span className={`font-data text-[12px] tabular ${putItm ? 'text-rust' : 'text-white/30'}`}>
+                          ${formatUsdc(row.putPremium, 4)}
+                        </span>
+                      ) : (
+                        <span className="skeleton h-4 w-14" />
+                      )}
+                    </div>
 
-                {/* Actions */}
-                <div className="px-3 py-2.5 flex items-center justify-end gap-1.5">
-                  {!settled && !isExpired ? (
-                    <>
-                      <button
-                        onClick={() => setModal({ strike: row.strike, optionType: 'Call' })}
-                        className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-mint border border-mint/35 rounded-lg hover:bg-mint/10 hover:border-mint/55 transition-all duration-[120ms] active:scale-95"
-                        aria-label={`Buy call at $${formatUsdc(row.strike, 4)}`}
-                      >
-                        Call
-                      </button>
-                      <button
-                        onClick={() => setModal({ strike: row.strike, optionType: 'Put' })}
-                        className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rust border border-rust/35 rounded-lg hover:bg-rust/10 hover:border-rust/55 transition-all duration-[120ms] active:scale-95"
-                        aria-label={`Buy put at $${formatUsdc(row.strike, 4)}`}
-                      >
-                        Put
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-[10px] text-white/22 uppercase tracking-wider font-sans">
-                      {settled ? 'Settled' : 'Expired'}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                    {/* Actions */}
+                    <div className="px-3 py-2.5 flex items-center justify-end gap-1.5">
+                      {!settled && !isExpired ? (
+                        <>
+                          <button
+                            onClick={() => setModal({ strike: row.strike, optionType: 'Call' })}
+                            className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-mint border border-mint/35 rounded-lg hover:bg-mint/10 hover:border-mint/55 transition-all duration-[120ms] active:scale-95"
+                            aria-label={`Buy call at $${formatUsdc(row.strike, 4)}`}
+                          >
+                            Call
+                          </button>
+                          <button
+                            onClick={() => setModal({ strike: row.strike, optionType: 'Put' })}
+                            className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rust border border-rust/35 rounded-lg hover:bg-rust/10 hover:border-rust/55 transition-all duration-[120ms] active:scale-95"
+                            aria-label={`Buy put at $${formatUsdc(row.strike, 4)}`}
+                          >
+                            Put
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-[10px] text-white/22 uppercase tracking-wider font-sans">
+                          {settled ? 'Settled' : 'Expired'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+            </div>{/* end min-w */}
+          </div>{/* end overflow-x-auto */}
         </div>
       )}
 
