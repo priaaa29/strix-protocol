@@ -14,26 +14,22 @@ export function WalletConnect({ compact = false }: WalletConnectProps) {
 
   if (wallet.connected && wallet.address) {
     return (
-      <div className={cn("flex items-center gap-2", compact ? "w-full" : "")}>
+      <div className={cn('flex items-center gap-2', compact ? 'w-full' : '')}>
         <div className={cn(
-          "flex items-center gap-2 border border-surface-border bg-surface-over px-2.5 py-1.5 rounded-sm",
-          compact && "flex-1 min-w-0"
+          'flex items-center gap-2 border border-white/[0.10] bg-white/[0.04] px-2.5 py-1.5 rounded-full',
+          compact && 'flex-1 min-w-0'
         )}>
-          {/* Pulse indicator */}
           <span className="relative flex h-1.5 w-1.5 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-mint opacity-50" />
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-mint" />
           </span>
-          <span className="text-2xs font-mono text-ink-2 tabular truncate">
-            {shortenAddress(wallet.address, 6)}
+          <span className="text-[11px] font-mono text-white/55 tabular truncate">
+            {shortenAddress(wallet.address, 4)}
           </span>
         </div>
         <button
           onClick={disconnect}
-          className={cn(
-            "shrink-0 text-ink-3 hover:text-rust transition-colors duration-150 p-1 rounded-sm",
-            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold"
-          )}
+          className="shrink-0 text-white/25 hover:text-rust transition-colors duration-150 p-1 rounded-full"
           aria-label="Disconnect wallet"
           title="Disconnect"
         >
@@ -51,9 +47,9 @@ export function WalletConnect({ compact = false }: WalletConnectProps) {
         href="https://www.freighter.app/"
         target="_blank"
         rel="noopener noreferrer"
-        className={cn(compact && "w-full")}
+        className={cn(compact && 'w-full')}
       >
-        <Button variant="outline" size="sm" className={cn(compact && "w-full")}>
+        <Button variant="outline" size="sm" className={cn(compact && 'w-full text-[10px]')}>
           Install Freighter
         </Button>
       </a>
@@ -61,17 +57,17 @@ export function WalletConnect({ compact = false }: WalletConnectProps) {
   }
 
   return (
-    <div className={cn("flex flex-col gap-1", compact && "w-full")}>
+    <div className={cn('flex flex-col gap-1', compact && 'w-full')}>
       <Button
         size="sm"
         onClick={connect}
         loading={loading}
-        className={cn(compact && "w-full")}
+        className={cn(compact && 'w-full text-[11px]')}
       >
-        Connect Wallet
+        Connect
       </Button>
       {error && (
-        <p className="text-[10px] text-rust leading-tight">{error}</p>
+        <p className="text-[10px] text-rust leading-tight font-sans">{error}</p>
       )}
     </div>
   );
