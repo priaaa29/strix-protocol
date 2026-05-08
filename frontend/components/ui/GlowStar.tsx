@@ -62,6 +62,15 @@ export function GlowStar({ className }: { className?: string }) {
               </feMerge>
             </filter>
 
+            {/* Scalable bloom filters — stdDeviation is in SVG units so these
+                scale proportionally at any rendered size, unlike CSS blur(px) */}
+            <filter id="gs-bloom-lg" x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur stdDeviation="75" />
+            </filter>
+            <filter id="gs-bloom-xl" x="-300%" y="-300%" width="700%" height="700%">
+              <feGaussianBlur stdDeviation="130" />
+            </filter>
+
             {/* Ring gradient — bright arc sweeping around the orbit */}
             <linearGradient id="gs-ring-a" x1="0%" y1="0%" x2="100%" y2="60%">
               <stop offset="0%"   stopColor="white" stopOpacity="0" />
@@ -102,14 +111,12 @@ export function GlowStar({ className }: { className?: string }) {
           {/* ── Chrome star — inner spin ───────────────── */}
           <g className="glow-star-spin">
 
-            {/* Massive outer bloom — bleeds far beyond SVG bounds */}
+            {/* Massive outer bloom — uses SVG filters so it scales at any size */}
             <g opacity="0.35">
-              <path d={STAR} fill="white"
-                style={{ filter: 'blur(70px)' }} />
+              <path d={STAR} fill="white" filter="url(#gs-bloom-lg)" />
             </g>
             <g opacity="0.22">
-              <path d={STAR} fill="white"
-                style={{ filter: 'blur(120px)' }} />
+              <path d={STAR} fill="white" filter="url(#gs-bloom-xl)" />
             </g>
 
             {/* Atmospheric outer glow */}
