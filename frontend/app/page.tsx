@@ -50,66 +50,22 @@ export default function Dashboard() {
       {/* ══════════════════════════════════════════════════
           HERO
           ══════════════════════════════════════════════════ */}
-      <section className="animate-enter relative min-h-[500px] lg:min-h-[560px] flex flex-col justify-center">
+      <section className="animate-enter relative min-h-[500px] lg:min-h-[560px] flex flex-col justify-center hero-mobile-glow">
 
-        {/* ── Star light cast — screen blend illuminates nearby text ── */}
+        {/* ── Star light cast (desktop) ── */}
         <div
-          className="pointer-events-none select-none absolute"
+          className="pointer-events-none select-none absolute hidden sm:block"
           style={{
-            right: '-120px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: '920px',
-            height: '920px',
-            borderRadius: '50%',
+            right: '-120px', top: '50%', transform: 'translateY(-50%)',
+            width: '920px', height: '920px', borderRadius: '50%',
             background:
-              'radial-gradient(circle, ' +
-              'rgba(255,255,255,0.20) 0%, ' +
-              'rgba(255,255,255,0.11) 8%, ' +
-              'rgba(255,255,255,0.05) 22%, ' +
-              'rgba(255,255,255,0.018) 40%, ' +
-              'rgba(255,255,255,0.006) 55%, ' +
-              'transparent 70%)',
-            mixBlendMode: 'screen',
-            zIndex: 2,
+              'radial-gradient(circle,rgba(255,255,255,0.20) 0%,rgba(255,255,255,0.11) 8%,' +
+              'rgba(255,255,255,0.05) 22%,rgba(255,255,255,0.018) 40%,' +
+              'rgba(255,255,255,0.006) 55%,transparent 70%)',
+            mixBlendMode: 'screen', zIndex: 2,
           }}
           aria-hidden
         />
-
-        {/* Mobile star — CSS background glow + plain white star, zero filters */}
-        <div
-          className="sm:hidden pointer-events-none select-none absolute right-0 top-1/2 -translate-y-1/2"
-          style={{ zIndex: 3, width: 280, height: 280 }}
-          aria-hidden
-        >
-          {/* CSS radial-gradient glow — no filter property, always renders */}
-          <div style={{
-            position: 'absolute',
-            inset: '-60px',
-            borderRadius: '50%',
-            background:
-              'radial-gradient(circle, ' +
-              'rgba(255,255,255,0.30) 0%, ' +
-              'rgba(200,215,255,0.15) 30%, ' +
-              'rgba(150,170,255,0.06) 58%, ' +
-              'transparent 75%)',
-          }} />
-          {/* Plain white 4-pointed star — no SVG filters, no CSS filters */}
-          <svg
-            viewBox="-110 -130 220 230"
-            width="280"
-            height="280"
-            style={{ position: 'relative', display: 'block' }}
-          >
-            <path
-              d="M 0,-120 L 8,-8 L 100,0 L 8,8 L 0,75 L -8,8 L -100,0 L -8,-8 Z"
-              fill="white"
-              opacity="0.82"
-            />
-            <circle cx="0" cy="0" r="6" fill="white" />
-            <circle cx="0" cy="-120" r="3" fill="white" opacity="0.9" />
-          </svg>
-        </div>
 
         {/* Tablet + desktop — full chrome GlowStar */}
         <div
@@ -157,6 +113,19 @@ export default function Dashboard() {
               <Button size="lg" variant="outline">Add Liquidity →</Button>
             </Link>
           </div>
+        </div>
+
+        {/* Mobile star — normal flow, below text, no position/z-index/filters */}
+        <div className="sm:hidden mt-10 flex justify-end pointer-events-none" aria-hidden>
+          <svg width="220" height="220" viewBox="-110 -110 220 220">
+            <path
+              d="M 0,-100 L 7,-7 L 85,0 L 7,7 L 0,65 L -7,7 L -85,0 L -7,-7 Z"
+              fill="white"
+              opacity="0.75"
+            />
+            <circle cx="0" cy="0" r="5" fill="white" />
+            <circle cx="0" cy="-100" r="3" fill="white" opacity="0.85" />
+          </svg>
         </div>
 
         {/* Floating product mockup — desktop only */}
