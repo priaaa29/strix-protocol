@@ -22,7 +22,6 @@ export function RiskDisclaimer({ variant }: { variant: Variant }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Only show if user hasn't dismissed this variant before
     const dismissed = localStorage.getItem(STORAGE_KEY(variant));
     if (!dismissed) setVisible(true);
   }, [variant]);
@@ -32,12 +31,12 @@ export function RiskDisclaimer({ variant }: { variant: Variant }) {
   const { title, body } = COPY[variant];
 
   return (
-    <div className="flex items-start gap-3 px-4 py-3 rounded border border-rust/30 bg-rust/5 mb-6">
-      <span className="text-rust mt-0.5 shrink-0" aria-hidden>⚠</span>
+    <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl border border-rust/25 bg-rust/[0.05] mb-6">
+      <span className="text-rust mt-0.5 shrink-0 text-[13px]" aria-hidden>⚠</span>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold text-rust uppercase tracking-wide mb-1">{title}</p>
-        <p className="text-xs text-ink-2 leading-relaxed">{body}{' '}
-          <Link href="/terms" className="text-ink-3 underline hover:text-ink-2 transition-colors">
+        <p className="text-[11px] font-semibold text-rust/80 uppercase tracking-wide mb-1 font-sans">{title}</p>
+        <p className="text-[11px] text-white/35 leading-relaxed font-sans">{body}{' '}
+          <Link href="/terms" className="text-white/45 underline hover:text-white/65 transition-colors">
             Terms of Service
           </Link>.
         </p>
@@ -47,7 +46,7 @@ export function RiskDisclaimer({ variant }: { variant: Variant }) {
           localStorage.setItem(STORAGE_KEY(variant), '1');
           setVisible(false);
         }}
-        className="shrink-0 text-ink-3 hover:text-ink-2 transition-colors text-xs mt-0.5"
+        className="shrink-0 text-white/22 hover:text-white/50 transition-colors text-xs mt-0.5"
         aria-label="Dismiss risk warning"
       >
         ✕

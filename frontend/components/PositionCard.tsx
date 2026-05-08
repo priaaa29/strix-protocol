@@ -15,7 +15,7 @@ export function PositionCard({ position, onClaim }: PositionCardProps) {
   const [txResult, setTxResult] = useState<TxResult | null>(null);
   const [claiming, setClaiming] = useState(false);
 
-  const { pnl, pnlPct, positive } = calcPnl(position.premiumPaid, position.payout, position.settled);
+  const { pnl: _pnl, pnlPct, positive } = calcPnl(position.premiumPaid, position.payout, position.settled);
   const now       = Math.floor(Date.now() / 1000);
   const isExpired = position.expiry <= now;
   const isCall    = position.optionType === 'Call';
@@ -43,44 +43,45 @@ export function PositionCard({ position, onClaim }: PositionCardProps) {
   };
 
   return (
-    <div className={`border border-surface-border rounded-sm overflow-hidden ${isCall ? 'pos-bar-call' : 'pos-bar-put'} hover:border-surface-subtle transition-colors duration-150`}>
+    <div className={[
+      'glass-card overflow-hidden',
+      isCall ? 'border-l-2 border-l-mint/50' : 'border-l-2 border-l-rust/50',
+    ].join(' ')}>
 
       {/* Header row */}
-      <div className="flex items-center justify-between px-4 py-3 bg-surface-raised border-b border-surface-border">
+      <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.025] border-b border-white/[0.06]">
         <div className="flex items-center gap-3">
           <span className={`badge ${isCall ? 'badge-itm' : 'badge-otm'}`}>
             {position.optionType}
           </span>
-          <span className="font-mono text-sm text-ink font-medium tabular">
+          <span className="font-data text-[13px] text-white/75 tabular">
             ${formatUsdc(position.strike, 4)} strike
           </span>
-          <span className="text-ink-3 text-xs hidden sm:inline">
+          <span className="text-white/25 text-[11px] hidden sm:inline font-sans">
             · {formatExpiry(position.expiry)}
           </span>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge />
-          <span className="text-[10px] text-ink-3 tabular">#{position.id}</span>
+          <span className="text-[10px] text-white/22 tabular font-sans">#{position.id}</span>
         </div>
       </div>
 
       {/* Data row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 bg-surface-raised divide-x divide-surface-border">
+      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-white/[0.06]">
         {[
           { label: 'Amount',       value: `${position.amount} XLM` },
           { label: 'Premium Paid', value: `$${formatUsdc(position.premiumPaid, 4)}` },
           { label: 'Expiry',       value: isExpired ? formatExpiry(position.expiry) : formatCountdown(position.expiry) },
           {
             label: position.settled ? 'P&L' : 'Est. P&L',
-            value: position.settled
-              ? `${positive ? '+' : ''}${pnlPct.toFixed(1)}%`
-              : '—',
-            color: position.settled ? (positive ? 'text-mint' : 'text-rust') : 'text-ink-2',
+            value: position.settled ? `${positive ? '+' : ''}${pnlPct.toFixed(1)}%` : '—',
+            color: position.settled ? (positive ? 'text-mint' : 'text-rust') : 'text-white/40',
           },
         ].map((item, i) => (
-          <div key={item.label} className={`px-4 py-3 ${i >= 2 ? 'border-t sm:border-t-0 border-surface-border' : ''}`}>
-            <span className="label">{item.label}</span>
-            <p className={`font-mono text-sm tabular mt-1.5 ${'color' in item ? item.color : 'text-ink'}`}>
+          <div key={item.label} className="px-5 py-3.5">
+            <span className="label mb-1.5">{item.label}</span>
+            <p className={`font-data text-[12px] tabular mt-1 ${'color' in item ? item.color : 'text-white/65'}`}>
               {item.value}
             </p>
           </div>
@@ -89,29 +90,23 @@ export function PositionCard({ position, onClaim }: PositionCardProps) {
 
       {/* Payout row (if settled and ITM) */}
       {position.settled && position.payout > 0n && (
-        <div className="px-4 py-3 border-t border-surface-border bg-mint-bg flex items-center justify-between">
+        <div className="px-5 py-3.5 border-t border-white/[0.06] bg-mint/[0.04] flex items-center justify-between">
           <div>
-            <span className="label text-mint/80">Settlement Payout</span>
-            <p className="font-mono font-semibold text-mint tabular mt-1">
+            <span className="label text-mint/70 mb-1">Settlement Payout</span>
+            <p className="font-data font-semibold text-mint tabular mt-0.5">
               +${formatUsdc(position.payout, 4)} USDC
             </p>
           </div>
           {!position.claimed && (
-            <Button
-              variant="success"
-              size="sm"
-              onClick={handleClaim}
-              loading={claiming}
-            >
+            <Button variant="success" size="sm" onClick={handleClaim} loading={claiming}>
               Claim
             </Button>
           )}
         </div>
       )}
 
-      {/* Tx status */}
       {txResult && (
-        <div className="px-4 pb-3">
+        <div className="px-5 pb-4">
           <TransactionStatus result={txResult} />
         </div>
       )}

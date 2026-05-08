@@ -23,23 +23,22 @@ interface BuyOptionModalProps {
 export function BuyOptionModal({
   open, onClose, strike, spotPrice, expiry, optionType, walletAddress, onBuy,
 }: BuyOptionModalProps) {
-  const [amount, setAmount]     = useState('1');
-  const [txResult, setTxResult] = useState<TxResult | null>(null);
+  const [amount, setAmount]         = useState('1');
+  const [txResult, setTxResult]     = useState<TxResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) { setAmount('1'); setTxResult(null); setSubmitting(false); }
   }, [open]);
 
-  const amountNum     = Math.max(1, Math.floor(Number(amount) || 1));
+  const amountNum      = Math.max(1, Math.floor(Number(amount) || 1));
   const previewPremium = calcPremium(optionType, spotPrice, strike, expiry, amountNum);
   const perContract    = previewPremium / BigInt(Math.max(amountNum, 1));
 
-  const isCallItm = optionType === 'Call' && strike < spotPrice;
-  const isPutItm  = optionType === 'Put'  && strike > spotPrice;
-  const moneyness = (isCallItm || isPutItm) ? 'ITM' : strike === spotPrice ? 'ATM' : 'OTM';
-
-  const isCall = optionType === 'Call';
+  const isCallItm  = optionType === 'Call' && strike < spotPrice;
+  const isPutItm   = optionType === 'Put'  && strike > spotPrice;
+  const moneyness  = (isCallItm || isPutItm) ? 'ITM' : strike === spotPrice ? 'ATM' : 'OTM';
+  const isCall     = optionType === 'Call';
 
   const handleBuy = async () => {
     if (!walletAddress) return;
@@ -61,16 +60,16 @@ export function BuyOptionModal({
 
       <div className="px-5 py-4 space-y-4">
 
-        {/* Option summary table */}
-        <div className="border border-surface-border rounded-sm overflow-hidden">
+        {/* Option summary */}
+        <div className="border border-white/[0.08] rounded-2xl overflow-hidden">
           {[
-            { label: 'Type', value: optionType, isType: true },
+            { label: 'Type',      value: optionType,              isType: true  },
             { label: 'Strike',    value: `$${formatUsdc(strike, 4)}` },
             { label: 'Spot',      value: `$${formatUsdc(spotPrice, 4)}` },
-            { label: 'Moneyness', value: moneyness, isMoney: true },
+            { label: 'Moneyness', value: moneyness,               isMoney: true },
             { label: 'Expiry',    value: formatExpiry(expiry) },
           ].map(({ label, value, isType, isMoney }) => (
-            <div key={label} className="flex items-center justify-between px-4 py-2.5 border-b border-surface-border last:border-b-0">
+            <div key={label} className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] last:border-b-0 bg-white/[0.01]">
               <span className="label">{label}</span>
               {isType ? (
                 <span className={`badge ${isCall ? 'badge-itm' : 'badge-otm'}`}>{value}</span>
@@ -79,7 +78,7 @@ export function BuyOptionModal({
                   {value}
                 </span>
               ) : (
-                <span className="font-mono text-sm text-ink tabular">{value}</span>
+                <span className="font-data text-[12px] text-white/70 tabular">{value}</span>
               )}
             </div>
           ))}
@@ -97,35 +96,27 @@ export function BuyOptionModal({
         />
 
         {/* Premium summary */}
-        <div className="border border-gold/30 bg-gold/[0.06] rounded-sm px-4 py-3 space-y-1">
+        <div className="border border-gold/25 bg-gold/[0.05] rounded-xl px-4 py-3 space-y-1">
           <div className="flex items-baseline justify-between">
-            <span className="label text-gold/80">Est. Total Premium</span>
-            <span className="data-val text-[20px] text-gold tabular">
+            <span className="label text-gold/70">Est. Total Premium</span>
+            <span className="data-val text-[22px] text-gold tabular">
               {formatUsdcDollar(previewPremium, 4)}
             </span>
           </div>
-          <p className="text-[11px] text-ink-3">
+          <p className="text-[11px] text-white/28 font-sans">
             {formatUsdcDollar(perContract, 4)} per contract · Actual price computed on-chain
           </p>
         </div>
 
-        {/* Tx status */}
         {txResult && <TransactionStatus result={txResult} />}
 
-        {/* Actions */}
         {!walletAddress ? (
-          <p className="text-center text-[11px] text-ink-2 uppercase tracking-wider py-1">
+          <p className="text-center text-[11px] text-white/25 uppercase tracking-wider py-1 font-sans">
             Connect wallet to trade
           </p>
         ) : (
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={onClose}
-              disabled={submitting}
-              className="flex-1"
-            >
+            <Button variant="ghost" size="md" onClick={onClose} disabled={submitting} className="flex-1">
               Cancel
             </Button>
             <Button
