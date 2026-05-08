@@ -53,11 +53,8 @@ export default function Dashboard() {
       <section className="animate-enter relative min-h-[500px] lg:min-h-[560px] flex flex-col justify-center">
 
         {/* ── Star light cast — screen blend illuminates nearby text ── */}
-        {/* This is the "light falling on content" effect: a large radial gradient
-            with mix-blend-mode:screen brightens the dark background wherever the
-            star's light would reach, making nearby text appear lit from the right. */}
         <div
-          className="pointer-events-none select-none absolute hidden lg:block"
+          className="pointer-events-none select-none absolute"
           style={{
             right: '-120px',
             top: '50%',
@@ -67,11 +64,11 @@ export default function Dashboard() {
             borderRadius: '50%',
             background:
               'radial-gradient(circle, ' +
-              'rgba(255,255,255,0.28) 0%, ' +
-              'rgba(255,255,255,0.16) 8%, ' +
-              'rgba(255,255,255,0.07) 22%, ' +
-              'rgba(255,255,255,0.025) 40%, ' +
-              'rgba(255,255,255,0.008) 55%, ' +
+              'rgba(255,255,255,0.20) 0%, ' +
+              'rgba(255,255,255,0.11) 8%, ' +
+              'rgba(255,255,255,0.05) 22%, ' +
+              'rgba(255,255,255,0.018) 40%, ' +
+              'rgba(255,255,255,0.006) 55%, ' +
               'transparent 70%)',
             mixBlendMode: 'screen',
             zIndex: 2,
@@ -79,14 +76,12 @@ export default function Dashboard() {
           aria-hidden
         />
 
-        {/* Chrome glow star — primary hero 3D element */}
-        <div className="pointer-events-none select-none absolute right-8 top-1/2 -translate-y-1/2 w-[520px] h-[520px] hidden lg:block" style={{ zIndex: 3 }}>
-          <GlowStar className="w-full h-full opacity-90" />
-        </div>
-
-        {/* Mobile decorative star fallback */}
-        <div className="lg:hidden pointer-events-none select-none absolute -top-8 right-0 star-pulse" aria-hidden>
-          <div className="star-rotate opacity-[0.12]"><SparkSvg size={110} /></div>
+        {/* Chrome glow star — responsive across all breakpoints */}
+        <div
+          className="pointer-events-none select-none absolute right-0 sm:right-4 lg:right-8 top-3 sm:top-1/2 sm:-translate-y-1/2 w-[200px] h-[200px] sm:w-[360px] sm:h-[360px] lg:w-[520px] lg:h-[520px] opacity-55 sm:opacity-75 lg:opacity-90"
+          style={{ zIndex: 3 }}
+        >
+          <GlowStar className="w-full h-full" />
         </div>
 
         {/* Small accent stars */}
