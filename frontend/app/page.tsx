@@ -76,10 +76,20 @@ export default function Dashboard() {
           aria-hidden
         />
 
+        {/* CSS glow orb — always visible fallback behind the SVG star */}
+        <div
+          className="pointer-events-none select-none absolute right-[-30px] sm:right-4 lg:right-8 top-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] lg:w-[560px] lg:h-[560px] rounded-full"
+          style={{
+            zIndex: 2,
+            background: 'radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 35%, transparent 65%)',
+          }}
+          aria-hidden
+        />
+
         {/* Chrome glow star — responsive across all breakpoints */}
         <div
-          className="pointer-events-none select-none absolute right-0 sm:right-4 lg:right-8 top-3 sm:top-1/2 sm:-translate-y-1/2 w-[200px] h-[200px] sm:w-[360px] sm:h-[360px] lg:w-[520px] lg:h-[520px] opacity-55 sm:opacity-75 lg:opacity-90"
-          style={{ zIndex: 3 }}
+          className="pointer-events-none select-none absolute right-[-30px] sm:right-4 lg:right-8 top-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] lg:w-[520px] lg:h-[520px]"
+          style={{ zIndex: 3, opacity: 0.85 }}
         >
           <GlowStar className="w-full h-full" />
         </div>
