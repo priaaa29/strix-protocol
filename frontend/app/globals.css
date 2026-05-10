@@ -5,7 +5,7 @@
 /* ═══════════════════════════════════════════════════════════
    STRIX PROTOCOL — DESIGN SYSTEM v2
    Mood: Premium dark. Editorial scale. Clean precision.
-   Fonts: Syne (display) · Inter (body) · IBM Plex Mono (data)
+   Fonts: Space Grotesk (display) · Fraunces italic (accent) · Work Sans (body) · IBM Plex Mono (data)
    ═══════════════════════════════════════════════════════════ */
 
 :root {
@@ -61,7 +61,7 @@ body {
     );
   background-attachment: fixed;
   color: var(--t-ink);
-  font-family: var(--font-inter, "Inter", system-ui, sans-serif);
+  font-family: var(--font-inter, "Work Sans", system-ui, sans-serif);
   font-size: 0.875rem;
   line-height: 1.6;
   min-height: 100dvh;
@@ -120,12 +120,12 @@ body::after {
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* ── Typography ─────────────────────────────────────────── */
-.font-display { font-family: var(--font-syne, "Syne", sans-serif); }
+.font-display { font-family: var(--font-syne, "Space Grotesk", sans-serif); }
 .font-data    { font-family: var(--font-ibm-plex-mono, "IBM Plex Mono", monospace); }
 
 .label {
   display: block;
-  font-family: var(--font-inter, "Inter", sans-serif);
+  font-family: var(--font-inter, "Work Sans", sans-serif);
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -135,7 +135,7 @@ body::after {
 }
 
 .data-val {
-  font-family: var(--font-syne, "Syne", sans-serif);
+  font-family: var(--font-syne, "Space Grotesk", sans-serif);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -470,7 +470,7 @@ body::after {
 
 /* ── Flow step (editorial numbered section) ─────────────── */
 .flow-step-num {
-  font-family: var(--font-syne, "Syne", sans-serif);
+  font-family: var(--font-syne, "Space Grotesk", sans-serif);
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.18em;

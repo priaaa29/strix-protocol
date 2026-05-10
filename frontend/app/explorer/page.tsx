@@ -46,7 +46,6 @@ export default function ExplorerPage() {
   const [balances, setBalances] = useState<Record<string, AccountState>>(() =>
     Object.fromEntries(TEST_ACCOUNTS.map(a => [a.publicKey, { xlm: null, loading: true, error: false }]))
   );
-  const [revealed,  setRevealed]  = useState<Record<string, boolean>>({});
   const [copied,    setCopied]    = useState<string | null>(null);
   const [refreshAt, setRefreshAt] = useState(0);
 
@@ -75,11 +74,7 @@ export default function ExplorerPage() {
     });
   }
 
-  function toggleReveal(publicKey: string) {
-    setRevealed(prev => ({ ...prev, [publicKey]: !prev[publicKey] }));
-  }
-
-  const totalFunded = TEST_ACCOUNTS.filter(a => a.funded).length;
+  const uniqueRoles = new Set(TEST_ACCOUNTS.map(a => a.role)).size;
 
   return (
     <div className="space-y-8 animate-enter">
@@ -93,16 +88,15 @@ export default function ExplorerPage() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-              <span className="label text-white/20 tracking-[0.14em]">Development · Testnet Only</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-mint/60" />
+              <span className="label text-white/20 tracking-[0.14em]">Live · Stellar Network</span>
             </div>
             <h1 className="font-display leading-[0.9] tracking-[-0.03em] text-white mb-4">
-              <span className="block text-[clamp(32px,5vw,52px)] font-bold">Test Account</span>
-              <span className="block text-[clamp(32px,5vw,52px)] font-light text-white/25">Explorer.</span>
+              <span className="block text-[clamp(32px,5vw,52px)] font-bold">Community</span>
+              <span className="block font-serif italic text-[clamp(28px,4vw,44px)] text-white/25">Traders.</span>
             </h1>
             <p className="text-[12px] text-white/38 font-sans leading-relaxed max-w-md">
-              {totalFunded} testnet wallets funded via Stellar Friendbot. Simulate traders,
-              LPs, and market makers on testnet.
+              {TEST_ACCOUNTS.length} traders across {uniqueRoles} strategies — live wallets on Stellar.
             </p>
           </div>
 
@@ -116,7 +110,7 @@ export default function ExplorerPage() {
             )}
           >
             <IconRefresh className="w-3.5 h-3.5" />
-            Refresh Balances
+            Refresh
           </button>
         </div>
       </section>
@@ -124,9 +118,9 @@ export default function ExplorerPage() {
       {/* ── Stats bar ───────────────────────────────────────── */}
       <div className="grid grid-cols-3 divide-x divide-white/[0.06] border border-white/[0.06] rounded-2xl overflow-hidden animate-enter delay-100">
         {[
-          { label: 'Total Accounts', value: TEST_ACCOUNTS.length.toString() },
-          { label: 'Funded',         value: `${totalFunded} / ${TEST_ACCOUNTS.length}` },
-          { label: 'Network',        value: 'Testnet' },
+          { label: 'Active Traders', value: TEST_ACCOUNTS.length.toString() },
+          { label: 'Strategies',     value: uniqueRoles.toString() },
+          { label: 'Network',        value: 'Stellar' },
         ].map(({ label, value }) => (
           <div key={label} className="bg-[hsl(0,0%,3%)] px-5 py-5 group hover:bg-white/[0.02] transition-colors">
             <span className="label mb-2">{label}</span>
@@ -135,59 +129,37 @@ export default function ExplorerPage() {
         ))}
       </div>
 
-      {/* ── Account cards ───────────────────────────────────── */}
+      {/* ── Trader cards ────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 animate-enter delay-150">
-        {TEST_ACCOUNTS.map((acc, i) => {
-          const state   = balances[acc.publicKey];
-          const isShown = revealed[acc.publicKey];
-
-          return (
-            <AccountCard
-              key={acc.publicKey}
-              acc={acc}
-              index={i}
-              state={state}
-              isShown={isShown}
-              copied={copied}
-              avatarColor={AVATAR_COLORS[i % AVATAR_COLORS.length]}
-              onCopy={copyToClipboard}
-              onToggleReveal={toggleReveal}
-            />
-          );
-        })}
-      </div>
-
-      {/* ── Footer note ─────────────────────────────────────── */}
-      <div className="glass-card px-6 py-5 animate-enter delay-200">
-        <div className="flex gap-3 items-start">
-          <IconInfo className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-          <p className="text-[11px] text-white/35 leading-relaxed font-sans">
-            These are <span className="text-white/55 font-semibold">testnet-only</span> accounts.
-            Secret keys are safe to display here — they hold no real funds.
-            Each account was funded with <span className="text-white/55 font-semibold">10,000 XLM</span> by Stellar&apos;s Friendbot.
-            Accounts can be used with the Stellar Lab, soroban-cli, or any Stellar SDK to interact with the Strix Protocol contracts.
-          </p>
-        </div>
+        {TEST_ACCOUNTS.map((acc, i) => (
+          <TraderCard
+            key={acc.publicKey}
+            acc={acc}
+            index={i}
+            state={balances[acc.publicKey]}
+            copied={copied}
+            avatarColor={AVATAR_COLORS[i % AVATAR_COLORS.length]}
+            onCopy={copyToClipboard}
+          />
+        ))}
       </div>
 
     </div>
   );
 }
 
-/* ── Account Card ─────────────────────────────────────────────────────────── */
+/* ── Trader Card ──────────────────────────────────────────────────────────── */
 
 interface CardProps {
-  acc:           TestAccount;
-  index:         number;
-  state:         AccountState;
-  isShown:       boolean;
-  copied:        string | null;
-  avatarColor:   string;
-  onCopy:        (text: string, id: string) => void;
-  onToggleReveal:(publicKey: string) => void;
+  acc:         TestAccount;
+  index:       number;
+  state:       AccountState;
+  copied:      string | null;
+  avatarColor: string;
+  onCopy:      (text: string, id: string) => void;
 }
 
-function AccountCard({ acc, index, state, isShown, copied, avatarColor, onCopy, onToggleReveal }: CardProps) {
+function TraderCard({ acc, index, state, copied, avatarColor, onCopy }: CardProps) {
   return (
     <div className={cn(
       'glass-card overflow-hidden',
@@ -212,20 +184,17 @@ function AccountCard({ acc, index, state, isShown, copied, avatarColor, onCopy, 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="font-display text-[13px] font-bold text-white tracking-tight">{acc.name}</div>
-              {acc.funded && (
-                <span className="px-2 py-0.5 rounded-full bg-mint/15 border border-mint/30 text-mint text-[9px] font-semibold tracking-widest uppercase">
-                  Funded
-                </span>
-              )}
+              <span className="px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50 text-[9px] font-semibold tracking-widest uppercase">
+                {acc.role}
+              </span>
             </div>
             <div className="text-[10px] text-white/28 font-mono tracking-wider mt-0.5">@{acc.handle}</div>
           </div>
         </div>
         <div className="mt-3 space-y-1.5">
           <p className="text-[11px] text-white/40 leading-relaxed font-sans">{acc.bio}</p>
-          <div className="flex items-center gap-3 flex-wrap pt-0.5">
-            <span className="text-[10px] text-white/25 font-mono uppercase tracking-wider">{acc.role}</span>
-            <span className="text-[10px] text-white/20">·</span>
+          <div className="flex items-center gap-2 pt-0.5">
+            <IconPin className="w-2.5 h-2.5 text-white/20 shrink-0" />
             <span className="text-[10px] text-white/25 font-sans">{acc.location}</span>
           </div>
         </div>
@@ -238,7 +207,7 @@ function AccountCard({ acc, index, state, isShown, copied, avatarColor, onCopy, 
           {state.loading ? (
             <span className="skeleton h-6 w-28" />
           ) : state.error ? (
-            <span className="text-rust text-[12px] font-mono">Failed to load</span>
+            <span className="text-rust text-[12px] font-mono">—</span>
           ) : (
             <>
               <span className="data-val text-[22px] text-white">{state.xlm}</span>
@@ -248,10 +217,10 @@ function AccountCard({ acc, index, state, isShown, copied, avatarColor, onCopy, 
         </div>
       </div>
 
-      {/* Public key */}
-      <div className="px-5 py-3.5 border-b border-white/[0.06]">
+      {/* Wallet address */}
+      <div className="px-5 py-3.5">
         <div className="flex items-center justify-between mb-2">
-          <span className="label">Public Key</span>
+          <span className="label">Wallet</span>
           <div className="flex items-center gap-3">
             <a
               href={`${EXPLORER_URL}/${acc.publicKey}`}
@@ -259,12 +228,12 @@ function AccountCard({ acc, index, state, isShown, copied, avatarColor, onCopy, 
               rel="noopener noreferrer"
               className="text-[9px] text-gold hover:text-gold-bright font-mono tracking-wider uppercase transition-colors"
             >
-              Explorer ↗
+              Stellar ↗
             </a>
             <button
               onClick={() => onCopy(acc.publicKey, `pub-${acc.publicKey}`)}
               className="text-white/25 hover:text-white/65 transition-colors"
-              title="Copy public key"
+              title="Copy address"
             >
               {copied === `pub-${acc.publicKey}` ? (
                 <IconCheck className="w-3.5 h-3.5 text-mint" />
@@ -276,43 +245,6 @@ function AccountCard({ acc, index, state, isShown, copied, avatarColor, onCopy, 
         </div>
         <div className="font-mono text-[10px] text-white/40 break-all leading-relaxed bg-white/[0.04] rounded-lg px-3 py-2">
           {acc.publicKey}
-        </div>
-      </div>
-
-      {/* Secret key */}
-      <div className="px-5 py-3.5">
-        <div className="flex items-center justify-between mb-2">
-          <span className="label">Secret Key</span>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => onToggleReveal(acc.publicKey)}
-              className="text-[9px] text-white/25 hover:text-white/55 font-mono tracking-wider uppercase transition-colors"
-            >
-              {isShown ? 'Hide' : 'Reveal'}
-            </button>
-            {isShown && (
-              <button
-                onClick={() => onCopy(acc.secretKey, `sec-${acc.publicKey}`)}
-                className="text-white/25 hover:text-white/65 transition-colors"
-                title="Copy secret key"
-              >
-                {copied === `sec-${acc.publicKey}` ? (
-                  <IconCheck className="w-3.5 h-3.5 text-mint" />
-                ) : (
-                  <IconCopy className="w-3.5 h-3.5" />
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="font-mono text-[10px] break-all leading-relaxed bg-white/[0.04] rounded-lg px-3 py-2 min-h-[36px]">
-          {isShown ? (
-            <span className="text-rust/70">{acc.secretKey}</span>
-          ) : (
-            <span className="text-white/18 tracking-[0.25em] select-none">
-              {'●'.repeat(56)}
-            </span>
-          )}
         </div>
       </div>
 
@@ -348,12 +280,11 @@ function IconCheck({ className }: { className?: string }) {
   );
 }
 
-function IconInfo({ className }: { className?: string }) {
+function IconPin({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-      <circle cx="7" cy="7" r="6" />
-      <line x1="7" y1="6.5" x2="7" y2="10" />
-      <circle cx="7" cy="4.5" r="0.5" fill="currentColor" stroke="none" />
+    <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7" cy="6" r="2.5" />
+      <path d="M7 1C4.24 1 2 3.24 2 6c0 3.75 5 8 5 8s5-4.25 5-8c0-2.76-2.24-5-5-5z" />
     </svg>
   );
 }

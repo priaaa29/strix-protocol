@@ -50,7 +50,7 @@ export default function Dashboard() {
       {/* ══════════════════════════════════════════════════
           HERO
           ══════════════════════════════════════════════════ */}
-      <section className="animate-enter relative min-h-[500px] lg:min-h-[560px] flex flex-col justify-center hero-mobile-glow">
+      <section className="relative min-h-[500px] lg:min-h-[560px] flex flex-col justify-center hero-mobile-glow">
 
         {/* ── Star light cast (desktop) ── */}
         <div
@@ -67,9 +67,10 @@ export default function Dashboard() {
           aria-hidden
         />
 
-        {/* Tablet + desktop — full chrome GlowStar */}
+        {/* GlowStar — all breakpoints. Scales down on mobile via responsive sizing.
+            Kept outside animate-enter so SVG filter overflow is never clipped. */}
         <div
-          className="hidden sm:block pointer-events-none select-none absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 w-[380px] h-[380px] lg:w-[520px] lg:h-[520px]"
+          className="pointer-events-none select-none absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 w-[240px] h-[240px] sm:w-[380px] sm:h-[380px] lg:w-[520px] lg:h-[520px]"
           style={{ zIndex: 3, opacity: 0.88 }}
           aria-hidden
         >
@@ -87,7 +88,7 @@ export default function Dashboard() {
         </div>
 
         {/* Text */}
-        <div className="relative z-10 max-w-[500px]">
+        <div className="animate-enter relative z-10 max-w-[500px]">
           <div className="flex items-center gap-2 mb-5">
             <div className="w-1.5 h-1.5 rounded-full bg-white/25" />
             <p className="label text-white/25 tracking-[0.16em]">
@@ -95,10 +96,10 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <h1 className="font-display leading-[0.87] tracking-[-0.04em] text-white mb-7">
-            <span className="block text-[clamp(50px,8.5vw,80px)] font-bold">Trade XLM</span>
-            <span className="block text-[clamp(50px,8.5vw,80px)] font-bold">Options</span>
-            <span className="block text-[clamp(50px,8.5vw,80px)] font-light text-white/22">On-Chain.</span>
+          <h1 className="leading-[0.87] tracking-[-0.04em] text-white mb-7">
+            <span className="block font-display text-[clamp(50px,8.5vw,80px)] font-bold">Trade XLM</span>
+            <span className="block font-display text-[clamp(50px,8.5vw,80px)] font-bold">Options</span>
+            <span className="block font-serif text-[clamp(36px,6vw,62px)] italic font-bold text-white/22">On-Chain.</span>
           </h1>
 
           <p className="text-[13px] text-white/40 max-w-[360px] leading-relaxed mb-9 font-sans">
@@ -113,19 +114,6 @@ export default function Dashboard() {
               <Button size="lg" variant="outline">Add Liquidity →</Button>
             </Link>
           </div>
-        </div>
-
-        {/* Mobile star — normal flow, below text, no position/z-index/filters */}
-        <div className="sm:hidden mt-10 flex justify-end pointer-events-none" aria-hidden>
-          <svg width="220" height="220" viewBox="-110 -110 220 220">
-            <path
-              d="M 0,-100 L 7,-7 L 85,0 L 7,7 L 0,65 L -7,7 L -85,0 L -7,-7 Z"
-              fill="white"
-              opacity="0.75"
-            />
-            <circle cx="0" cy="0" r="5" fill="white" />
-            <circle cx="0" cy="-100" r="3" fill="white" opacity="0.85" />
-          </svg>
         </div>
 
         {/* Floating product mockup — desktop only */}

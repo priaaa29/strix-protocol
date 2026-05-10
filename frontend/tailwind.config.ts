@@ -31,7 +31,8 @@ const config: Config = {
         "ink-3":           "hsl(0, 0%, 28%)",
       },
       fontFamily: {
-        display: ["var(--font-syne)", "sans-serif"],
+        display: ["var(--font-syne)", "system-ui", "sans-serif"],
+        serif:   ["var(--font-fraunces)", "Georgia", "serif"],
         sans:    ["var(--font-inter)", "system-ui", "sans-serif"],
         mono:    ["var(--font-ibm-plex-mono)", "monospace"],
       },

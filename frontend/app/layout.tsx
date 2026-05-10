@@ -1,16 +1,26 @@
 import type { Metadata } from 'next';
-import { Syne, Inter, IBM_Plex_Mono } from 'next/font/google';
+import { Space_Grotesk, Bodoni_Moda, Work_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { Layout } from '@/components/Layout';
 
-const syne = Syne({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-syne',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['300', '400', '500', '600', '700'],
   display: 'swap',
 });
 
-const inter = Inter({
+// Didone serif italic — same classification as Ranemia Pro. Extreme hairline
+// vs thick strokes, optical-size axis makes it spectacular at display scale.
+const bodoniModa = Bodoni_Moda({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
+  weight: ['400', '500', '600', '700', '800', '900'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+});
+
+const workSans = Work_Sans({
   subsets: ['latin'],
   variable: '--font-inter',
   weight: ['300', '400', '500', '600', '700'],
@@ -38,7 +48,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${syne.variable} ${inter.variable} ${ibmPlexMono.variable}`}>
+    <html lang="en" className={`dark ${spaceGrotesk.variable} ${bodoniModa.variable} ${workSans.variable} ${ibmPlexMono.variable}`}>
       <body>
         <Layout>{children}</Layout>
       </body>
