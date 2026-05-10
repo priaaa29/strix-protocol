@@ -12,7 +12,9 @@ const execFileAsync = promisify(execFile);
 
 const OPTION_MARKET_ID = process.env.OPTION_MARKET_ID  || '';
 const ADMIN_ADDR       = process.env.ADMIN_ADDRESS     || '';
-const STELLAR_SOURCE   = process.env.STELLAR_KEY_ALIAS || '';
+// On Render (production) use the raw secret key directly.
+// Locally, fall back to the key alias from the Stellar CLI keystore.
+const STELLAR_SOURCE   = process.env.ADMIN_SECRET_KEY || process.env.STELLAR_KEY_ALIAS || '';
 const CHECK_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
 
 let keeperTimer: ReturnType<typeof setInterval> | null = null;
