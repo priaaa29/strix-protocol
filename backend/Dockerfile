@@ -13,8 +13,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Install Stellar CLI (needed by settlement-keeper to sign transactions)
-RUN apk add --no-cache curl tar && \
-    curl -fsSL "https://github.com/stellar/stellar-cli/releases/download/v26.0.0/stellar-cli-26.0.0-x86_64-unknown-linux-musl.tar.gz" \
+RUN apk add --no-cache curl tar libgcc && \
+    curl -fsSL "https://github.com/stellar/stellar-cli/releases/download/v26.0.0/stellar-cli-26.0.0-x86_64-unknown-linux-gnu.tar.gz" \
       | tar -xz -C /usr/local/bin stellar
 
 # Non-root user for security
