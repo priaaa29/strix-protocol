@@ -74,7 +74,7 @@ pub struct MarketConfig {
     pub vault: Address,
     /// SAC-wrapped USDC token address.
     pub usdc_token: Address,
-    /// Reflector oracle address.
+    /// DIA oracle address.
     pub oracle: Address,
     /// Size of each contract in XLM (7-decimal). Default: 1.0 XLM = 10_000_000.
     pub contract_size: u64,

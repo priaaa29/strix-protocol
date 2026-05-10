@@ -7,28 +7,20 @@ pub mod types;
 mod test;
 
 use soroban_sdk::{
-    contract, contractimpl, symbol_short, token, Address, Env, Vec,
+    contract, contractimpl, symbol_short, token, Address, Env, String, Vec,
 };
 
 use settlement::{calc_payout, validated_payout};
 use types::{DataKey, MarketConfig, OptionType, Position, SettlementInfo, StrikeInfo};
 
 
-/// Oracle price data (Reflector-compatible format).
+/// Oracle price data (DIA format).
 /// Exposed at crate level for mock oracle in tests.
 #[soroban_sdk::contracttype]
 #[derive(Clone)]
-pub struct OptionMarketPriceData {
-    pub price: i128,
-    pub timestamp: u64,
-}
-
-/// Oracle asset type (Reflector-compatible).
-#[soroban_sdk::contracttype]
-#[derive(Clone)]
-pub enum OptionMarketAsset {
-    Stellar(Address),
-    Other(soroban_sdk::Symbol),
+pub struct OptionMarketOracleValue {
+    pub price: u128,
+    pub timestamp: u128,
 }
 
 /// 7-decimal fixed-point scale.
@@ -80,7 +72,7 @@ impl OptionMarket {
     /// * `pricing_engine` — PricingEngine contract address
     /// * `vault`          — UnderwritingVault contract address
     /// * `usdc_token`     — SAC-wrapped USDC address
-    /// * `oracle`         — Reflector oracle address
+    /// * `oracle`         — DIA oracle address
     /// * `contract_size`  — XLM per contract in 7-decimal (10_000_000 = 1 XLM)
     pub fn initialize(
         env: Env,
@@ -424,7 +416,7 @@ impl OptionMarket {
     /// Settle all positions for a given expiry.
     ///
     /// Can be called by anyone after the expiry timestamp has passed.
-    /// Fetches settlement price from Reflector oracle, calculates payouts
+    /// Fetches settlement price from DIA oracle, calculates payouts
     /// for all positions, updates position records, and handles vault accounting.
     ///
     /// # Arguments
@@ -665,32 +657,27 @@ impl OptionMarket {
 
     // ─── Private Helpers ──────────────────────────────────────────────────────
 
-    /// Fetch settlement price from oracle with relaxed staleness (1 hour).
+    /// Fetch settlement price from DIA oracle with relaxed staleness (1 hour).
     fn get_settlement_price(env: &Env, oracle: &Address) -> i128 {
-        let asset = OptionMarketAsset::Other(symbol_short!("XLM"));
-        let price_data: Option<OptionMarketPriceData> = env.invoke_contract(
+        let key = String::from_str(env, "XLM/USD");
+        let oracle_value: OptionMarketOracleValue = env.invoke_contract(
             oracle,
-            &symbol_short!("lastprice"),
-            soroban_sdk::vec![env, soroban_sdk::IntoVal::into_val(&asset, env)],
+            &symbol_short!("get_value"),
+            soroban_sdk::vec![env, soroban_sdk::IntoVal::into_val(&key, env)],
         );
 
-        let price_data = match price_data {
-            Some(p) => p,
-            None => panic!("oracle: no price for settlement"),
-        };
-
-        let now = env.ledger().timestamp();
+        let now = env.ledger().timestamp() as u128;
         // Allow 1 hour staleness for settlement
-        if now > price_data.timestamp + 3600 {
+        if now > oracle_value.timestamp + 3600 {
             panic!("oracle: settlement price too stale");
         }
 
-        if price_data.price <= 0 {
+        if oracle_value.price == 0 {
             panic!("oracle: invalid settlement price");
         }
 
-        // Convert from 14-decimal to 7-decimal
-        price_data.price / 10_000_000
+        // Convert from DIA's 8-decimal to our 7-decimal (divide by 10)
+        (oracle_value.price / 10) as i128
     }
 
     /// Store a position and update user/expiry indexes.

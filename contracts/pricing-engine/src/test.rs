@@ -4,12 +4,12 @@ use super::*;
 use soroban_sdk::{
     contract, contractimpl, contracttype,
     testutils::{Address as _, Ledger, LedgerInfo},
-    Address, Env,
+    Address, Env, String,
 };
 
 // ─── Mock Oracle ──────────────────────────────────────────────────────────────
 
-/// A mock Reflector oracle that returns a configurable price.
+/// A mock DIA oracle that returns a configurable price.
 #[contract]
 pub struct MockOracle;
 
@@ -22,22 +22,16 @@ enum MockKey {
 
 #[contractimpl]
 impl MockOracle {
-    pub fn set_price(env: Env, price: i128, timestamp: u64) {
+    pub fn set_price(env: Env, price: u128, timestamp: u128) {
         env.storage().instance().set(&MockKey::Price, &price);
         env.storage().instance().set(&MockKey::Timestamp, &timestamp);
     }
 
-    /// Matches Reflector's `lastprice(asset)` interface.
-    pub fn lastprice(env: Env, _asset: crate::oracle::Asset) -> Option<crate::oracle::PriceData> {
-        let price: Option<i128> = env.storage().instance().get(&MockKey::Price);
-        let timestamp: Option<u64> = env.storage().instance().get(&MockKey::Timestamp);
-        match (price, timestamp) {
-            (Some(p), Some(ts)) => Some(crate::oracle::PriceData {
-                price: p,
-                timestamp: ts,
-            }),
-            _ => None,
-        }
+    /// Matches DIA's `get_value(key)` interface.
+    pub fn get_value(env: Env, _key: String) -> crate::oracle::OracleValue {
+        let price: u128 = env.storage().instance().get(&MockKey::Price).unwrap_or(0);
+        let timestamp: u128 = env.storage().instance().get(&MockKey::Timestamp).unwrap_or(0);
+        crate::oracle::OracleValue { price, timestamp }
     }
 }
 
@@ -73,11 +67,11 @@ fn setup() -> (Env, PricingEngineClient<'static>, Address, Address) {
     let pricing_id = env.register_contract(None, PricingEngine);
     let oracle_id = env.register_contract(None, MockOracle);
 
-    // Set oracle price: 0.12 USDC per XLM
-    // Reflector 14-decimal: 0.12 * 10^14 = 12_000_000_000_000
+    // Set oracle price: 0.12 USD per XLM
+    // DIA 8-decimal: 0.12 * 10^8 = 12_000_000
     MockOracleClient::new(&env, &oracle_id).set_price(
-        &12_000_000_000_000i128,
-        &1_700_000_000u64,
+        &12_000_000u128,
+        &1_700_000_000u128,
     );
 
     let client = PricingEngineClient::new(&env, &pricing_id);
@@ -305,8 +299,8 @@ fn test_spread_applied() {
 
     let oracle_id = env.register_contract(None, MockOracle);
     MockOracleClient::new(&env, &oracle_id).set_price(
-        &12_000_000_000_000i128,
-        &1_700_000_000u64,
+        &12_000_000u128,
+        &1_700_000_000u128,
     );
 
     // No spread
@@ -404,7 +398,7 @@ fn test_amount_scales_premium() {
 fn test_get_spot_price() {
     let (_env, client, _oracle, _admin) = setup();
     let spot = client.get_spot_price();
-    // Oracle set: 0.12 USDC (14-dec: 12_000_000_000_000 → 7-dec: 1_200_000)
+    // Oracle set: 0.12 USD (DIA 8-dec: 12_000_000 → 7-dec: 1_200_000)
     let expected = to_fixed(0.12);
     assert_eq!(spot, expected, "Spot price: {} != {}", to_float(spot), to_float(expected));
 }

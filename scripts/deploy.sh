@@ -16,6 +16,11 @@ NETWORK="testnet"
 SOURCE="priya"
 WASM_DIR="contracts/target/wasm32v1-none/release"
 
+# DIA oracle on Stellar testnet (no deployment needed — it's already live)
+DIA_ORACLE_ID="CAEDPEZDRCEJCF73ASC5JGNKCIJDV2QJQSW6DJ6B74MYALBNKCJ5IFP4"
+# Circle testnet USDC (SAC-wrapped)
+USDC_ID="CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+
 echo "======================================================"
 echo "   Strix Protocol — Testnet Deployment"
 echo "======================================================"
@@ -29,13 +34,9 @@ cd ..
 echo "✅ Build complete"
 echo ""
 
-# ── Deploy MockOracle ──────────────────────────────────────────────────────────
-echo "🚀 Deploying MockOracle (testnet price feed)..."
-ORACLE_ID=$(stellar contract deploy \
-    --wasm "$WASM_DIR/mock_oracle.wasm" \
-    --source "$SOURCE" \
-    --network "$NETWORK")
-echo "   MockOracle: $ORACLE_ID"
+echo "📡 Using DIA oracle (testnet): $DIA_ORACLE_ID"
+echo "💵 Using Circle USDC (testnet): $USDC_ID"
+echo ""
 
 # ── Deploy PricingEngine ───────────────────────────────────────────────────────
 echo "🚀 Deploying PricingEngine..."
@@ -68,7 +69,8 @@ cat > .deployed.json <<EOF
   "pricingEngine": "$PRICING_ID",
   "vault": "$VAULT_ID",
   "optionMarket": "$MARKET_ID",
-  "mockOracle": "$ORACLE_ID",
+  "diaOracle": "$DIA_ORACLE_ID",
+  "usdcToken": "$USDC_ID",
   "deployedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
@@ -79,7 +81,6 @@ echo "✅ Deployment complete!"
 echo "   Contract IDs saved to .deployed.json"
 echo ""
 echo "   Verify on Stellar Expert:"
-echo "   https://stellar.expert/explorer/testnet/contract/$ORACLE_ID"
 echo "   https://stellar.expert/explorer/testnet/contract/$PRICING_ID"
 echo "   https://stellar.expert/explorer/testnet/contract/$VAULT_ID"
 echo "   https://stellar.expert/explorer/testnet/contract/$MARKET_ID"

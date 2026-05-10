@@ -5,7 +5,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short,
     testutils::{Address as _, Ledger, LedgerInfo},
     token::{StellarAssetClient, TokenClient},
-    Address, Env, Vec,
+    Address, Env, String, Vec,
 };
 
 // ─── Mock PricingEngine ───────────────────────────────────────────────────────
@@ -56,21 +56,18 @@ enum OracleKey {
 
 #[contractimpl]
 impl MockOracle {
-    pub fn set_price(env: Env, price: i128, ts: u64) {
+    pub fn set_price(env: Env, price: u128, ts: u128) {
         env.storage().instance().set(&OracleKey::Price, &price);
         env.storage().instance().set(&OracleKey::Ts, &ts);
         env.storage().instance().extend_ttl(100_000, 10_000_000);
     }
 
-    /// Reflector-compatible interface: price in 14-decimal.
-    pub fn lastprice(env: Env, _asset: crate::OptionMarketAsset) -> Option<crate::OptionMarketPriceData> {
+    /// DIA-compatible interface: price in 8-decimal.
+    pub fn get_value(env: Env, _key: String) -> crate::OptionMarketOracleValue {
         env.storage().instance().extend_ttl(100_000, 10_000_000);
-        let price: Option<i128> = env.storage().instance().get(&OracleKey::Price);
-        let ts: Option<u64> = env.storage().instance().get(&OracleKey::Ts);
-        match (price, ts) {
-            (Some(p), Some(t)) => Some(crate::OptionMarketPriceData { price: p, timestamp: t }),
-            _ => None,
-        }
+        let price: u128 = env.storage().instance().get(&OracleKey::Price).unwrap_or(0);
+        let timestamp: u128 = env.storage().instance().get(&OracleKey::Ts).unwrap_or(0);
+        crate::OptionMarketOracleValue { price, timestamp }
     }
 }
 
@@ -132,9 +129,9 @@ fn setup() -> TestCtx {
     let pe_id = env.register_contract(None, MockPricingEngine);
     MockPricingEngineClient::new(&env, &pe_id).set_spot(&to_usdc(0.12));
 
-    // Mock Oracle (14-decimal: 0.12 * 10^14 = 12_000_000_000_000)
+    // Mock Oracle (DIA 8-decimal: 0.12 * 10^8 = 12_000_000)
     let oracle_id = env.register_contract(None, MockOracle);
-    MockOracleClient::new(&env, &oracle_id).set_price(&12_000_000_000_000i128, &BASE_TIME);
+    MockOracleClient::new(&env, &oracle_id).set_price(&12_000_000u128, &(BASE_TIME as u128));
 
     // Vault
     let vault_id = env.register_contract(None, underwriting_vault_module::UnderwritingVault);
@@ -377,9 +374,9 @@ fn test_settle_itm_call() {
     });
 
     // Set settlement price to 0.15 (ITM for call with strike 0.12)
-    // 14-decimal: 0.15 * 10^14 = 15_000_000_000_000
+    // DIA 8-decimal: 0.15 * 10^8 = 15_000_000
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&15_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&15_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
 
@@ -415,9 +412,9 @@ fn test_settle_otm_call() {
         max_entry_ttl: 10_000_000,
     });
 
-    // Settlement price below strike (OTM for call)
+    // Settlement price below strike (OTM for call) — 0.10 USD
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&10_000_000_000_000i128, &(expiry_7d() + 100)); // 0.10
+        .set_price(&10_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
 
@@ -450,7 +447,7 @@ fn test_settle_itm_put() {
 
     // Settlement at 0.09 (below strike → ITM put)
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&9_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&9_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
 
@@ -477,7 +474,7 @@ fn test_double_settle_fails() {
         max_entry_ttl: 10_000_000,
     });
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&12_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&12_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
     ctx.market.settle(&ctx.admin, &expiry_7d()); // should panic
@@ -511,7 +508,7 @@ fn test_claim_itm_marks_claimed() {
         max_entry_ttl: 10_000_000,
     });
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&15_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&15_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
 
@@ -544,7 +541,7 @@ fn test_claim_otm_fails() {
         max_entry_ttl: 10_000_000,
     });
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&10_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&10_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
     ctx.market.claim(&buyer, &pos_id); // OTM → should panic
@@ -571,7 +568,7 @@ fn test_double_claim_fails() {
         max_entry_ttl: 10_000_000,
     });
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&15_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&15_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
     ctx.market.claim(&buyer, &pos_id);
@@ -600,7 +597,7 @@ fn test_claim_wrong_owner_fails() {
         max_entry_ttl: 10_000_000,
     });
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&15_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&15_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
     ctx.market.claim(&attacker, &pos_id);
@@ -640,7 +637,7 @@ fn test_is_settled_true_after_settlement() {
         max_entry_ttl: 10_000_000,
     });
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&12_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&12_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
     assert!(ctx.market.is_settled(&expiry_7d()));
@@ -680,7 +677,7 @@ fn test_multiple_positions_correct_settlement() {
     });
     // Settlement at 0.15 → calls ITM, put OTM
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
-        .set_price(&15_000_000_000_000i128, &(expiry_7d() + 100));
+        .set_price(&15_000_000u128, &((expiry_7d() + 100) as u128));
 
     ctx.market.settle(&ctx.admin, &expiry_7d());
 

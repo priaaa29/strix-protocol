@@ -7,7 +7,6 @@ import rateLimit from 'express-rate-limit';
 import { SorobanRpc } from '@stellar/stellar-sdk';
 import { initDatabase, getDb } from './indexer/db';
 import { startEventListener, stopEventListener } from './indexer/eventListener';
-import { startOracleKeeper, stopOracleKeeper } from './oracle-keeper';
 import { startSettlementKeeper, stopSettlementKeeper } from './settlement-keeper';
 import positionsRouter from './api/positions';
 import vaultRouter from './api/vault';
@@ -20,7 +19,6 @@ const REQUIRED_ENV = [
   'PRICING_ENGINE_ID',
   'VAULT_ID',
   'OPTION_MARKET_ID',
-  'ORACLE_ID',
   'ADMIN_ADDRESS',
   'STELLAR_KEY_ALIAS',
   'RPC_URL',
@@ -123,7 +121,6 @@ app.use((_req, res) => {
 
 initDatabase();
 startEventListener();
-startOracleKeeper();
 startSettlementKeeper();
 
 const server = app.listen(PORT, () => {
@@ -144,7 +141,6 @@ process.on('unhandledRejection', (reason) => {
 function shutdown() {
   console.log('[Shutdown] Stopping services...');
   stopEventListener();
-  stopOracleKeeper();
   stopSettlementKeeper();
   server.close(() => {
     console.log('[Shutdown] Server closed.');

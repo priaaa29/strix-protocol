@@ -20,7 +20,7 @@ fi
 PRICING_ID=$(jq -r '.pricingEngine' .deployed.json)
 VAULT_ID=$(jq -r '.vault' .deployed.json)
 MARKET_ID=$(jq -r '.optionMarket' .deployed.json)
-ORACLE_ID=$(jq -r '.mockOracle' .deployed.json)
+ORACLE_ID=$(jq -r '.diaOracle' .deployed.json)
 
 echo "======================================================"
 echo "   Strix Protocol — Contract Initialization"
@@ -28,7 +28,7 @@ echo "======================================================"
 echo "   PricingEngine : $PRICING_ID"
 echo "   Vault         : $VAULT_ID"
 echo "   OptionMarket  : $MARKET_ID"
-echo "   MockOracle    : $ORACLE_ID"
+echo "   DIA Oracle    : $ORACLE_ID"
 echo ""
 
 # ── Get admin address ──────────────────────────────────────────────────────────
@@ -37,24 +37,11 @@ echo "   Admin : $ADMIN_ADDR"
 echo ""
 
 # ── Testnet USDC ──────────────────────────────────────────────────────────────
-# SAC-wrapped USDC on testnet (Circle's test USDC)
-USDC_ID="CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+# SAC-wrapped USDC on testnet (Circle's official testnet USDC)
+USDC_ID=$(jq -r '.usdcToken' .deployed.json)
 
 echo "   USDC  : $USDC_ID"
 echo ""
-
-# ── Initialize MockOracle ─────────────────────────────────────────────────────
-# Price: 0.12 USDC per XLM = 12_000_000_000_000 in 14-decimal
-# (14-decimal: 1 USDC = 10^14; 7-decimal: 1 USDC = 10^7)
-echo "⚙️  Initializing MockOracle (0.12 USDC/XLM)..."
-stellar contract invoke \
-    --id "$ORACLE_ID" \
-    --source "$SOURCE" \
-    --network "$NETWORK" \
-    -- initialize \
-    --admin "$ADMIN_ADDR" \
-    --initial_price_14dec 12000000000000
-echo "   ✅ MockOracle initialized (XLM = 0.12 USDC)"
 
 # ── Initialize PricingEngine ──────────────────────────────────────────────────
 echo "⚙️  Initializing PricingEngine..."
@@ -116,7 +103,7 @@ PRICING_ENGINE_ID=$PRICING_ID
 VAULT_ID=$VAULT_ID
 OPTION_MARKET_ID=$MARKET_ID
 ORACLE_ID=$ORACLE_ID
-USDC_ID=$USDC_ID
+USDC_TOKEN_ID=$USDC_ID
 ADMIN_ADDRESS=$ADMIN_ADDR
 EOF
 
@@ -125,9 +112,8 @@ echo "======================================================"
 echo "✅ All contracts initialized and wired!"
 echo "   Environment saved to .env.testnet"
 echo ""
-echo "ℹ️  Oracle price can be updated with:"
-echo "   stellar contract invoke --id $ORACLE_ID --source $SOURCE --network $NETWORK"
-echo "     -- set_price --admin $ADMIN_ADDR --price_14dec <NEW_PRICE>"
+echo "ℹ️  Oracle: DIA testnet (autonomous — no keeper needed)"
+echo "   Contract: $ORACLE_ID"
 echo ""
 echo "▶  Next step: ./scripts/seed-vault.sh"
 echo "======================================================"
