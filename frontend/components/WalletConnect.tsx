@@ -10,7 +10,7 @@ interface WalletConnectProps {
 }
 
 export function WalletConnect({ compact = false }: WalletConnectProps) {
-  const { wallet, loading, error, freighterInstalled, connect, disconnect } = useWallet();
+  const { wallet, loading, error, connect, disconnect } = useWallet();
 
   if (wallet.connected && wallet.address) {
     return (
@@ -38,21 +38,6 @@ export function WalletConnect({ compact = false }: WalletConnectProps) {
           </svg>
         </button>
       </div>
-    );
-  }
-
-  if (freighterInstalled === false) {
-    return (
-      <a
-        href="https://www.freighter.app/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn(compact && 'w-full')}
-      >
-        <Button variant="outline" size="sm" className={cn(compact && 'w-full text-[10px]')}>
-          Install Freighter
-        </Button>
-      </a>
     );
   }
 

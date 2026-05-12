@@ -118,15 +118,12 @@ export async function buildAndSubmitTx(
     // Assemble with simulation results
     const assembled = SorobanRpc.assembleTransaction(tx, simResult).build();
 
-    // Sign via Freighter (v2.x API)
-    const { signTransaction } = await import('@stellar/freighter-api');
-    const signResult = await signTransaction(assembled.toXDR(), {
-      networkPassphrase: getNetworkPassphrase(),
-      network: ACTIVE_NETWORK === 'mainnet' ? 'MAINNET' : 'TESTNET',
-    });
-
-    // signTransaction in v2 returns the signed XDR string directly or an object
-    const signedXdr = typeof signResult === 'string' ? signResult : (signResult as { signedTxXdr: string }).signedTxXdr;
+    // Sign via whichever wallet the user connected (Freighter, xBull, Lobstr, etc.)
+    const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit');
+    const { signedTxXdr: signedXdr } = await StellarWalletsKit.signTransaction(
+      assembled.toXDR(),
+      { networkPassphrase: getNetworkPassphrase() }
+    );
 
     // Deserialize and submit
     const signedTx = TransactionBuilder.fromXDR(
