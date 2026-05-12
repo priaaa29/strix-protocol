@@ -3,28 +3,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { WalletState } from '@/lib/types';
 import { ACTIVE_NETWORK } from '@/lib/constants';
-import {
-  StellarWalletsKit,
-  FreighterModule,
-  xBullModule,
-  LobstrModule,
-  HanaModule,
-  AlbedoModule,
-  Networks,
-} from '@creit.tech/stellar-wallets-kit';
+import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit/sdk';
+import { defaultModules } from '@creit.tech/stellar-wallets-kit/modules/utils';
+import { Networks } from '@creit.tech/stellar-wallets-kit/types';
 
 const NETWORK = ACTIVE_NETWORK === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
 
 function initKit() {
   StellarWalletsKit.init({
     network: NETWORK,
-    modules: [
-      new FreighterModule(),
-      new xBullModule(),
-      new LobstrModule(),
-      new HanaModule(),
-      new AlbedoModule(),
-    ],
+    modules: defaultModules(),
   });
 }
 
