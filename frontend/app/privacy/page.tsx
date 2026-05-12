@@ -21,7 +21,7 @@ export default function PrivacyPage() {
         <ul className="text-ink-2 text-sm leading-relaxed space-y-2 list-disc list-inside">
           <li>
             <strong className="text-ink">Stellar wallet address</strong> — your public key, read
-            from Freighter when you connect. This is public information on the Stellar blockchain.
+            from your wallet when you connect. This is public information on the Stellar blockchain.
           </li>
           <li>
             <strong className="text-ink">On-chain activity</strong> — option purchases, settlements,
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
           <li>No name, email address, or any personal identifying information</li>
           <li>No IP addresses stored (requests are not logged beyond in-memory rate limiting)</li>
           <li>No cookies or tracking pixels</li>
-          <li>No private keys — your keys never leave Freighter</li>
+          <li>No private keys — your keys never leave your wallet extension</li>
         </ul>
       </section>
 

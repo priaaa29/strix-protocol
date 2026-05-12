@@ -56,7 +56,7 @@ export default function PositionsPage() {
         </section>
         <div className="glass-card py-20 text-center">
           <p className="text-white/45 text-sm mb-1">Connect your wallet to view positions</p>
-          <p className="text-white/22 text-[11px] uppercase tracking-wider font-sans">Freighter required</p>
+          <p className="text-white/22 text-[11px] uppercase tracking-wider font-sans">Use the Connect button above</p>
         </div>
       </div>
     );
