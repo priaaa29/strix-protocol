@@ -7,20 +7,29 @@ pub mod types;
 mod test;
 
 use soroban_sdk::{
-    contract, contractimpl, symbol_short, token, Address, Env, String, Vec,
+    contract, contractimpl, symbol_short, token, Address, Env, Symbol, Vec,
 };
 
 use settlement::{calc_payout, validated_payout};
 use types::{DataKey, MarketConfig, OptionType, Position, SettlementInfo, StrikeInfo};
 
 
-/// Oracle price data (DIA format).
+/// Asset variant matching Reflector oracle interface.
 /// Exposed at crate level for mock oracle in tests.
 #[soroban_sdk::contracttype]
 #[derive(Clone)]
-pub struct OptionMarketOracleValue {
-    pub price: u128,
-    pub timestamp: u128,
+pub enum OptionMarketAsset {
+    Stellar(Address),
+    Other(Symbol),
+}
+
+/// Price data returned by Reflector oracle.
+/// Exposed at crate level for mock oracle in tests.
+#[soroban_sdk::contracttype]
+#[derive(Clone)]
+pub struct OptionMarketPriceData {
+    pub price: i128,
+    pub timestamp: u64,
 }
 
 /// 7-decimal fixed-point scale.
@@ -657,27 +666,29 @@ impl OptionMarket {
 
     // ─── Private Helpers ──────────────────────────────────────────────────────
 
-    /// Fetch settlement price from DIA oracle with relaxed staleness (1 hour).
+    /// Fetch settlement price from Reflector oracle with relaxed staleness (1 hour).
     fn get_settlement_price(env: &Env, oracle: &Address) -> i128 {
-        let key = String::from_str(env, "XLM/USD");
-        let oracle_value: OptionMarketOracleValue = env.invoke_contract(
+        let asset = OptionMarketAsset::Other(Symbol::new(env, "XLM"));
+        let result: Option<OptionMarketPriceData> = env.invoke_contract(
             oracle,
-            &symbol_short!("get_value"),
-            soroban_sdk::vec![env, soroban_sdk::IntoVal::into_val(&key, env)],
+            &symbol_short!("lastprice"),
+            soroban_sdk::vec![env, soroban_sdk::IntoVal::into_val(&asset, env)],
         );
 
-        let now = env.ledger().timestamp() as u128;
+        let price_data = result.expect("oracle: no settlement price available");
+
+        let now = env.ledger().timestamp();
         // Allow 1 hour staleness for settlement
-        if now > oracle_value.timestamp + 3600 {
+        if now > price_data.timestamp + 3600 {
             panic!("oracle: settlement price too stale");
         }
 
-        if oracle_value.price == 0 {
+        if price_data.price <= 0 {
             panic!("oracle: invalid settlement price");
         }
 
-        // Convert from DIA's 8-decimal to our 7-decimal (divide by 10)
-        (oracle_value.price / 10) as i128
+        // Convert from Reflector's 14-decimal to our 7-decimal (divide by 10^7)
+        price_data.price / 10_000_000
     }
 
     /// Store a position and update user/expiry indexes.
