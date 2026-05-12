@@ -17,9 +17,9 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
                 },
                 {
-                  "i128": {
+                  "u128": {
                     "hi": 0,
-                    "lo": 12000000000000
+                    "lo": 12000000
                   }
                 }
               ]
@@ -85,9 +85,9 @@
                           ]
                         },
                         "val": {
-                          "i128": {
+                          "u128": {
                             "hi": 0,
-                            "lo": 12000000000000
+                            "lo": 12000000
                           }
                         }
                       },
@@ -100,7 +100,10 @@
                           ]
                         },
                         "val": {
-                          "u64": 0
+                          "u128": {
+                            "hi": 0,
+                            "lo": 0
+                          }
                         }
                       }
                     ]
@@ -194,9 +197,9 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
                 },
                 {
-                  "i128": {
+                  "u128": {
                     "hi": 0,
-                    "lo": 12000000000000
+                    "lo": 12000000
                   }
                 }
               ]
@@ -251,9 +254,9 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
                 },
                 {
-                  "i128": {
+                  "u128": {
                     "hi": 0,
-                    "lo": 12000000000000
+                    "lo": 12000000
                   }
                 }
               ]
@@ -284,9 +287,9 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
                 },
                 {
-                  "i128": {
+                  "u128": {
                     "hi": 0,
-                    "lo": 12000000000000
+                    "lo": 12000000
                   }
                 }
               ]
@@ -352,9 +355,9 @@
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
                     },
                     {
-                      "i128": {
+                      "u128": {
                         "hi": 0,
-                        "lo": 12000000000000
+                        "lo": 12000000
                       }
                     }
                   ]
