@@ -23,7 +23,7 @@ fi
 
 VAULT_ID=$(jq -r '.vault' .deployed.json)
 ADMIN_ADDR=$(stellar keys address "$SOURCE")
-USDC_ID="CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+USDC_ID=$(jq -r '.usdcToken' .deployed.json)
 
 # Convert USDC to 7-decimal
 AMOUNT_7DEC=$(echo "$SEED_AMOUNT_USDC * 10000000" | bc)

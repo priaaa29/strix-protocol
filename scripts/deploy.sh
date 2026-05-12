@@ -16,10 +16,10 @@ NETWORK="testnet"
 SOURCE="priya"
 WASM_DIR="contracts/target/wasm32v1-none/release"
 
-# DIA oracle on Stellar testnet (no deployment needed — it's already live)
-DIA_ORACLE_ID="CAEDPEZDRCEJCF73ASC5JGNKCIJDV2QJQSW6DJ6B74MYALBNKCJ5IFP4"
-# Circle testnet USDC (SAC-wrapped)
-USDC_ID="CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+# Reflector oracle on Stellar testnet (live, free, 5-minute updates)
+REFLECTOR_ORACLE_ID="CCYOZJCOPG34LLQQ7N24YXBM7LL62R7ONMZ3G6WZAAYPB5OYKOMJRN63"
+# Testnet USDC SAC (issuer: GBPOKGY3JM6JZAAMKNYNDTKKWXH46SI3PLLJX2DARZ4QXS7WVL4WYQBA)
+USDC_ID="CBA4XQJCNN76UX3AQ63EKQXQMMIHTVENTXV2QNXLCOPMYIXAESQZUDZQ"
 
 echo "======================================================"
 echo "   Strix Protocol — Testnet Deployment"
@@ -34,8 +34,8 @@ cd ..
 echo "✅ Build complete"
 echo ""
 
-echo "📡 Using DIA oracle (testnet): $DIA_ORACLE_ID"
-echo "💵 Using Circle USDC (testnet): $USDC_ID"
+echo "📡 Using Reflector oracle (testnet): $REFLECTOR_ORACLE_ID"
+echo "💵 Using testnet USDC: $USDC_ID"
 echo ""
 
 # ── Deploy PricingEngine ───────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ cat > .deployed.json <<EOF
   "pricingEngine": "$PRICING_ID",
   "vault": "$VAULT_ID",
   "optionMarket": "$MARKET_ID",
-  "diaOracle": "$DIA_ORACLE_ID",
+  "oracle": "$REFLECTOR_ORACLE_ID",
   "usdcToken": "$USDC_ID",
   "deployedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }

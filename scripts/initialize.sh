@@ -20,7 +20,7 @@ fi
 PRICING_ID=$(jq -r '.pricingEngine' .deployed.json)
 VAULT_ID=$(jq -r '.vault' .deployed.json)
 MARKET_ID=$(jq -r '.optionMarket' .deployed.json)
-ORACLE_ID=$(jq -r '.diaOracle' .deployed.json)
+ORACLE_ID=$(jq -r '.oracle' .deployed.json)
 
 echo "======================================================"
 echo "   Strix Protocol — Contract Initialization"
@@ -28,7 +28,7 @@ echo "======================================================"
 echo "   PricingEngine : $PRICING_ID"
 echo "   Vault         : $VAULT_ID"
 echo "   OptionMarket  : $MARKET_ID"
-echo "   DIA Oracle    : $ORACLE_ID"
+echo "   Reflector     : $ORACLE_ID"
 echo ""
 
 # ── Get admin address ──────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ echo "======================================================"
 echo "✅ All contracts initialized and wired!"
 echo "   Environment saved to .env.testnet"
 echo ""
-echo "ℹ️  Oracle: DIA testnet (autonomous — no keeper needed)"
+echo "ℹ️  Oracle: Reflector testnet (autonomous — no keeper needed)"
 echo "   Contract: $ORACLE_ID"
 echo ""
 echo "▶  Next step: ./scripts/seed-vault.sh"
