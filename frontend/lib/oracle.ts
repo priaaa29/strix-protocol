@@ -37,7 +37,7 @@ export function clearPriceCache(): void {
   cachedPrice = null;
 }
 
-/** Get the DIA oracle contract ID. */
+/** Get the Reflector oracle contract ID. */
 export function getOracleContractId(): string {
   return CONTRACT_IDS.oracle;
 }
