@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { redirect } from 'next/navigation';
-import { TEST_ACCOUNTS, EXPLORER_URL, type TestAccount } from '@/lib/test-accounts';
+import { COMMUNITY_ACCOUNTS, EXPLORER_URL, type CommunityAccount } from '@/lib/community-accounts';
 import { cn } from '@/lib/utils';
 import { NETWORK_CONFIG, ACTIVE_NETWORK } from '@/lib/constants';
 
@@ -44,7 +44,7 @@ function SparkSvg({ size = 100 }: { size?: number }) {
 
 export default function ExplorerPage() {
   const [balances, setBalances] = useState<Record<string, AccountState>>(() =>
-    Object.fromEntries(TEST_ACCOUNTS.map(a => [a.publicKey, { xlm: null, loading: true, error: false }]))
+    Object.fromEntries(COMMUNITY_ACCOUNTS.map(a => [a.publicKey, { xlm: null, loading: true, error: false }]))
   );
   const [copied,    setCopied]    = useState<string | null>(null);
   const [refreshAt, setRefreshAt] = useState(0);
@@ -54,7 +54,7 @@ export default function ExplorerPage() {
       Object.fromEntries(Object.entries(prev).map(([k, v]) => [k, { ...v, loading: true }]))
     );
     await Promise.all(
-      TEST_ACCOUNTS.map(async (acc) => {
+      COMMUNITY_ACCOUNTS.map(async (acc) => {
         try {
           const xlm = await fetchXlmBalance(acc.publicKey, NETWORK_CONFIG.horizonUrl);
           setBalances(prev => ({ ...prev, [acc.publicKey]: { xlm, loading: false, error: false } }));
@@ -74,7 +74,7 @@ export default function ExplorerPage() {
     });
   }
 
-  const uniqueRoles = new Set(TEST_ACCOUNTS.map(a => a.role)).size;
+  const uniqueRoles = new Set(COMMUNITY_ACCOUNTS.map(a => a.role)).size;
 
   return (
     <div className="space-y-8 animate-enter">
@@ -96,7 +96,7 @@ export default function ExplorerPage() {
               <span className="block font-serif italic text-[clamp(28px,4vw,44px)] text-white/25">Traders.</span>
             </h1>
             <p className="text-[12px] text-white/38 font-sans leading-relaxed max-w-md">
-              {TEST_ACCOUNTS.length} traders across {uniqueRoles} strategies — live wallets on Stellar.
+              {COMMUNITY_ACCOUNTS.length} traders across {uniqueRoles} strategies — live wallets on Stellar.
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export default function ExplorerPage() {
       {/* ── Stats bar ───────────────────────────────────────── */}
       <div className="grid grid-cols-3 divide-x divide-white/[0.06] border border-white/[0.06] rounded-2xl overflow-hidden animate-enter delay-100">
         {[
-          { label: 'Active Traders', value: TEST_ACCOUNTS.length.toString() },
+          { label: 'Active Traders', value: COMMUNITY_ACCOUNTS.length.toString() },
           { label: 'Strategies',     value: uniqueRoles.toString() },
           { label: 'Network',        value: 'Stellar' },
         ].map(({ label, value }) => (
@@ -131,7 +131,7 @@ export default function ExplorerPage() {
 
       {/* ── Trader cards ────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 animate-enter delay-150">
-        {TEST_ACCOUNTS.map((acc, i) => (
+        {COMMUNITY_ACCOUNTS.map((acc, i) => (
           <TraderCard
             key={acc.publicKey}
             acc={acc}
@@ -151,7 +151,7 @@ export default function ExplorerPage() {
 /* ── Trader Card ──────────────────────────────────────────────────────────── */
 
 interface CardProps {
-  acc:         TestAccount;
+  acc:         CommunityAccount;
   index:       number;
   state:       AccountState;
   copied:      string | null;
