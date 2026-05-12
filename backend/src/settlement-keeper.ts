@@ -24,13 +24,13 @@ let keeperTimer: ReturnType<typeof setInterval> | null = null;
 function getCandidateExpiries(): number[] {
   const now = Math.floor(Date.now() / 1000);
   const candidates: number[] = [];
-  // Walk back 4 weeks + forward 1 week looking for Fridays at 16:00 UTC
+  // Walk back 4 weeks + forward 1 week looking for Fridays at 08:00 UTC
   const start = now - 28 * 24 * 3600;
   const end   = now + 7  * 24 * 3600;
   let t = start;
   while (t <= end) {
     const d = new Date(t * 1000);
-    if (d.getUTCDay() === 5 && d.getUTCHours() === 16 && d.getUTCMinutes() === 0) {
+    if (d.getUTCDay() === 5 && d.getUTCHours() === 8 && d.getUTCMinutes() === 0) {
       if (t < now) candidates.push(t); // only past expiries
       t += 7 * 24 * 3600; // jump to next week
     } else {
