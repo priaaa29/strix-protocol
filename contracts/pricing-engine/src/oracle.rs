@@ -1,88 +1,82 @@
-/// DIA oracle integration for XLM/USD price feeds.
+/// Reflector oracle integration for XLM/USD price feeds.
 ///
-/// DIA oracle returns prices with 8-decimal precision (1 USD = 10^8).
+/// Reflector returns prices with 14-decimal precision (1 USD = 10^14).
 /// We convert to 7-decimal (our internal USDC precision).
 ///
-/// Staleness threshold: 5 minutes (300 seconds).
-use soroban_sdk::{contracttype, symbol_short, Address, Env, String};
+/// Staleness threshold: 10 minutes (600 seconds) — Reflector updates every 5 min.
+use soroban_sdk::{contracttype, symbol_short, Address, Env, Symbol};
 
-/// Maximum age of an oracle price before we reject it (5 minutes).
-const MAX_PRICE_AGE_SECS: u64 = 300;
+/// Maximum age of an oracle price before we reject it (10 minutes).
+const MAX_PRICE_AGE_SECS: u64 = 600;
 
-/// DIA oracle returns 8-decimal precision: 1 USD = 10^8.
+/// Reflector returns 14-decimal precision: 1 USD = 10^14.
 /// Our scale is 7-decimal: 1 USDC = 10^7.
-/// Conversion: price_8dec / 10 = price_7dec
-const DIA_TO_OUR: u128 = 10;
+/// Conversion: price_14dec / 10^7 = price_7dec
+const REFLECTOR_TO_OUR: i128 = 10_000_000;
 
-/// Price record returned by DIA oracle.
-///
-/// DIA's interface:
-///   fn get_value(key: String) -> OracleValue
-/// where OracleValue is a tuple struct (price: u128, timestamp: u128)
-/// with price in 8-decimal format and timestamp as Unix seconds.
+/// Asset variant matching Reflector's interface.
 #[contracttype]
-pub struct OracleValue {
-    pub price: u128,
-    pub timestamp: u128,
+#[derive(Clone)]
+pub enum Asset {
+    Stellar(Address),
+    Other(Symbol),
 }
 
-/// Fetch the current XLM/USD price from the DIA oracle.
+/// Price data returned by Reflector oracle.
+#[contracttype]
+pub struct PriceData {
+    pub price: i128,
+    pub timestamp: u64,
+}
+
+/// Fetch the current XLM/USD price from the Reflector oracle.
 ///
 /// Returns the price as a 7-decimal fixed-point i128 (e.g. 0.12 USD = 1_200_000).
 /// Panics if:
-///   - Price is stale (> 5 minutes old)
-///   - Price is zero
+///   - Price is stale (> 10 minutes old)
+///   - Price is zero or negative
 pub fn get_xlm_price(env: &Env, oracle_address: &Address) -> i128 {
-    let key = String::from_str(env, "XLM/USD");
-    let oracle_value: OracleValue = env.invoke_contract(
+    let asset = Asset::Other(Symbol::new(env, "XLM"));
+    let result: Option<PriceData> = env.invoke_contract(
         oracle_address,
-        &symbol_short!("get_value"),
-        soroban_sdk::vec![env, soroban_sdk::IntoVal::into_val(&key, env)],
+        &symbol_short!("lastprice"),
+        soroban_sdk::vec![env, soroban_sdk::IntoVal::into_val(&asset, env)],
     );
 
+    let price_data = result.expect("oracle: no price available");
+
     // Staleness check
-    let now = env.ledger().timestamp() as u128;
-    if now > oracle_value.timestamp + MAX_PRICE_AGE_SECS as u128 {
+    let now = env.ledger().timestamp();
+    if now > price_data.timestamp + MAX_PRICE_AGE_SECS {
         panic!("oracle: price is stale");
     }
 
-    if oracle_value.price == 0 {
+    if price_data.price <= 0 {
         panic!("oracle: invalid price");
     }
 
-    // Convert from DIA's 8-decimal to our 7-decimal (divide by 10)
-    let price_7dec = (oracle_value.price / DIA_TO_OUR) as i128;
-
-    if price_7dec <= 0 {
-        panic!("oracle: price underflow after conversion");
-    }
-
-    price_7dec
+    price_data.price / REFLECTOR_TO_OUR
 }
 
 /// Fetch oracle price with explicit staleness tolerance (for testing / settlement).
 pub fn get_xlm_price_with_age(env: &Env, oracle_address: &Address, max_age_secs: u64) -> i128 {
-    let key = String::from_str(env, "XLM/USD");
-    let oracle_value: OracleValue = env.invoke_contract(
+    let asset = Asset::Other(Symbol::new(env, "XLM"));
+    let result: Option<PriceData> = env.invoke_contract(
         oracle_address,
-        &symbol_short!("get_value"),
-        soroban_sdk::vec![env, soroban_sdk::IntoVal::into_val(&key, env)],
+        &symbol_short!("lastprice"),
+        soroban_sdk::vec![env, soroban_sdk::IntoVal::into_val(&asset, env)],
     );
 
-    let now = env.ledger().timestamp() as u128;
-    if now > oracle_value.timestamp + max_age_secs as u128 {
+    let price_data = result.expect("oracle: no price available");
+
+    let now = env.ledger().timestamp();
+    if now > price_data.timestamp + max_age_secs {
         panic!("oracle: price is stale");
     }
 
-    if oracle_value.price == 0 {
+    if price_data.price <= 0 {
         panic!("oracle: invalid price");
     }
 
-    let price_7dec = (oracle_value.price / DIA_TO_OUR) as i128;
-
-    if price_7dec <= 0 {
-        panic!("oracle: price underflow after conversion");
-    }
-
-    price_7dec
+    price_data.price / REFLECTOR_TO_OUR
 }
