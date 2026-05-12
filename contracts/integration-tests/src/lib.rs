@@ -4,14 +4,14 @@
 /// complete flows: deposit → buy option → settle → claim → withdraw.
 #[cfg(test)]
 mod tests {
-    use option_market::{OptionMarket, OptionMarketClient, OptionMarketOracleValue};
+    use option_market::{OptionMarket, OptionMarketClient};
     use option_market::types::OptionType;
     use pricing_engine::{PricingEngine, PricingEngineClient};
     use soroban_sdk::{
         contract, contractimpl, contracttype,
         testutils::{Address as _, Ledger, LedgerInfo},
         token::StellarAssetClient,
-        Address, Env, String,
+        Address, Env, Symbol,
     };
     use underwriting_vault::{UnderwritingVault, UnderwritingVaultClient};
 
@@ -28,27 +28,19 @@ mod tests {
 
     #[contractimpl]
     impl IntMockOracle {
-        pub fn set_price(env: Env, price: u128, ts: u128) {
+        pub fn set_price(env: Env, price: i128, ts: u64) {
             env.storage().instance().set(&IntOracleKey::Price, &price);
             env.storage().instance().set(&IntOracleKey::Ts, &ts);
             env.storage().instance().extend_ttl(1_000_000, 10_000_000);
         }
 
-        /// DIA-compatible interface: price in 8-decimal, used by both
-        /// PricingEngine and OptionMarket (both call `get_value`).
-        pub fn get_value(env: Env, _key: String) -> pricing_engine::oracle::OracleValue {
+        /// Reflector-compatible interface: price in 14-decimal, used by both
+        /// PricingEngine and OptionMarket (both call `lastprice`).
+        pub fn lastprice(env: Env, _asset: pricing_engine::oracle::Asset) -> Option<pricing_engine::oracle::PriceData> {
             env.storage().instance().extend_ttl(1_000_000, 10_000_000);
-            let price: u128 = env.storage().instance().get(&IntOracleKey::Price).unwrap_or(0);
-            let timestamp: u128 = env.storage().instance().get(&IntOracleKey::Ts).unwrap_or(0);
-            pricing_engine::oracle::OracleValue { price, timestamp }
-        }
-
-        /// Also return OptionMarketOracleValue for settlement path.
-        pub fn get_value_market(env: Env, _key: String) -> OptionMarketOracleValue {
-            env.storage().instance().extend_ttl(1_000_000, 10_000_000);
-            let price: u128 = env.storage().instance().get(&IntOracleKey::Price).unwrap_or(0);
-            let timestamp: u128 = env.storage().instance().get(&IntOracleKey::Ts).unwrap_or(0);
-            OptionMarketOracleValue { price, timestamp }
+            let price: i128 = env.storage().instance().get(&IntOracleKey::Price).unwrap_or(0);
+            let timestamp: u64 = env.storage().instance().get(&IntOracleKey::Ts).unwrap_or(0);
+            Some(pricing_engine::oracle::PriceData { price, timestamp })
         }
     }
 
@@ -113,10 +105,10 @@ mod tests {
         let usdc_id = env.register_stellar_asset_contract(usdc_admin.clone());
         let usdc_sac = StellarAssetClient::new(&env, &usdc_id);
 
-        // Oracle: 0.12 USD per XLM (DIA 8-decimal: 0.12 * 10^8 = 12_000_000)
+        // Oracle: 0.12 USD per XLM (Reflector 14-decimal: 0.12 * 10^14 = 12_000_000_000_000)
         let oracle_id = env.register_contract(None, IntMockOracle);
         IntMockOracleClient::new(&env, &oracle_id)
-            .set_price(&12_000_000u128, &(BASE_TIME as u128));
+            .set_price(&12_000_000_000_000i128, &BASE_TIME);
 
         // PricingEngine
         let pe_id = env.register_contract(None, PricingEngine);
@@ -202,7 +194,7 @@ mod tests {
         // Advance past expiry, set ITM settlement price (0.15)
         advance_past_expiry(&w.env);
         IntMockOracleClient::new(&w.env, &w.oracle_id)
-            .set_price(&15_000_000u128, &((expiry_7d() + 100) as u128));
+            .set_price(&15_000_000_000_000i128, &(expiry_7d() + 100));
 
         // Settle
         w.market.settle(&w.admin, &expiry_7d());
@@ -244,7 +236,7 @@ mod tests {
         advance_past_expiry(&w.env);
         // Settlement price above strike → OTM
         IntMockOracleClient::new(&w.env, &w.oracle_id)
-            .set_price(&12_000_000u128, &((expiry_7d() + 100) as u128));
+            .set_price(&12_000_000_000_000i128, &(expiry_7d() + 100));
 
         w.market.settle(&w.admin, &expiry_7d());
 
@@ -281,7 +273,7 @@ mod tests {
         // Settle OTM (vault keeps premium)
         advance_past_expiry(&w.env);
         IntMockOracleClient::new(&w.env, &w.oracle_id)
-            .set_price(&10_000_000u128, &((expiry_7d() + 100) as u128));
+            .set_price(&10_000_000_000_000i128, &(expiry_7d() + 100));
         w.market.settle(&w.admin, &expiry_7d());
 
         // Both LPs share price increased proportionally
@@ -366,7 +358,7 @@ mod tests {
 
         // Settlement at 0.15 → calls ITM, puts OTM
         IntMockOracleClient::new(&w.env, &w.oracle_id)
-            .set_price(&15_000_000u128, &((expiry_7d() + 100) as u128));
+            .set_price(&15_000_000_000_000i128, &(expiry_7d() + 100));
 
         w.market.settle(&w.admin, &expiry_7d());
 
@@ -424,7 +416,7 @@ mod tests {
         // OTM settlement (price stays at 0.12, call with strike 0.12 is ATM/OTM)
         // Actually ATM at expiry → payout = max(0, 0.12-0.12) = 0, so OTM
         IntMockOracleClient::new(&w.env, &w.oracle_id)
-            .set_price(&12_000_000u128, &((expiry_7d() + 100) as u128));
+            .set_price(&12_000_000_000_000i128, &(expiry_7d() + 100));
         w.market.settle(&w.admin, &expiry_7d());
 
         let sp_final = w.vault.share_price();
