@@ -5,15 +5,34 @@ import type { WalletState } from '@/lib/types';
 import { ACTIVE_NETWORK } from '@/lib/constants';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit/sdk';
 import { defaultModules } from '@creit.tech/stellar-wallets-kit/modules/utils';
-import { Networks } from '@creit.tech/stellar-wallets-kit/types';
+import { Networks, KitEventType } from '@creit.tech/stellar-wallets-kit/types';
 
 const NETWORK = ACTIVE_NETWORK === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
+const ADDRESS_KEY = 'strix_wallet_address';
+const WALLET_ID_KEY = 'strix_wallet_id';
 
-function initKit() {
+let kitReady = false;
+
+function ensureKit() {
+  if (kitReady || typeof window === 'undefined') return;
   StellarWalletsKit.init({
     network: NETWORK,
     modules: defaultModules(),
   });
+  StellarWalletsKit.on(KitEventType.WALLET_SELECTED, (event) => {
+    if (event?.payload?.id) {
+      localStorage.setItem(WALLET_ID_KEY, event.payload.id);
+    }
+  });
+  const savedWalletId = localStorage.getItem(WALLET_ID_KEY);
+  if (savedWalletId) {
+    try {
+      StellarWalletsKit.setWallet(savedWalletId);
+    } catch {
+      localStorage.removeItem(WALLET_ID_KEY);
+    }
+  }
+  kitReady = true;
 }
 
 export function useWallet() {
@@ -25,21 +44,21 @@ export function useWallet() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Init kit once + auto-reconnect from localStorage
   useEffect(() => {
-    initKit();
-    const savedAddress = localStorage.getItem('strix_wallet_address');
+    ensureKit();
+    const savedAddress = localStorage.getItem(ADDRESS_KEY);
     if (savedAddress) {
       setWallet({ connected: true, address: savedAddress, network: ACTIVE_NETWORK });
     }
   }, []);
 
   const connect = useCallback(async () => {
+    ensureKit();
     setLoading(true);
     setError(null);
     try {
       const { address } = await StellarWalletsKit.authModal();
-      localStorage.setItem('strix_wallet_address', address);
+      localStorage.setItem(ADDRESS_KEY, address);
       setWallet({ connected: true, address, network: ACTIVE_NETWORK });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -52,7 +71,8 @@ export function useWallet() {
   }, []);
 
   const disconnect = useCallback(() => {
-    localStorage.removeItem('strix_wallet_address');
+    localStorage.removeItem(ADDRESS_KEY);
+    localStorage.removeItem(WALLET_ID_KEY);
     setWallet({ connected: false, address: null, network: null });
     setError(null);
   }, []);

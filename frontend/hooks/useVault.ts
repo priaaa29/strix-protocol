@@ -1,66 +1,143 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getVaultInfo, getLpInfo, depositToVault, withdrawFromVault } from '@/lib/soroban';
 import type { VaultInfo, LpInfo, TxResult } from '@/lib/types';
 
-export function useVault(walletAddress: string | null) {
-  const [vaultInfo, setVaultInfo] = useState<VaultInfo | null>(null);
-  const [lpInfo, setLpInfo] = useState<LpInfo | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+type Listener = () => void;
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+interface SharedState {
+  vaultInfo: VaultInfo | null;
+  lpInfo: LpInfo | null;
+  lpAddress: string | null;
+  loading: boolean;
+  error: string | null;
+  inflight: Promise<void> | null;
+  lastFetched: number;
+  listeners: Set<Listener>;
+  interval: ReturnType<typeof setInterval> | null;
+}
+
+const REFRESH_MS = 30_000;
+const STALE_MS = 5_000;
+
+const shared: SharedState = {
+  vaultInfo: null,
+  lpInfo: null,
+  lpAddress: null,
+  loading: false,
+  error: null,
+  inflight: null,
+  lastFetched: 0,
+  listeners: new Set(),
+  interval: null,
+};
+
+function notify() {
+  for (const l of shared.listeners) l();
+}
+
+async function fetchAll(walletAddress: string | null): Promise<void> {
+  if (shared.inflight) return shared.inflight;
+  shared.loading = true;
+  shared.error = null;
+  notify();
+
+  const task = (async () => {
     try {
       const info = await getVaultInfo();
-      setVaultInfo(info);
+      shared.vaultInfo = info;
 
       if (walletAddress) {
         const lp = await getLpInfo(walletAddress);
-        setLpInfo(lp);
+        shared.lpInfo = lp;
+        shared.lpAddress = walletAddress;
+      } else {
+        shared.lpInfo = null;
+        shared.lpAddress = null;
       }
+      shared.lastFetched = Date.now();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load vault info');
+      shared.error = err instanceof Error ? err.message : 'Failed to load vault info';
     } finally {
-      setLoading(false);
+      shared.loading = false;
+      shared.inflight = null;
+      notify();
     }
-  }, [walletAddress]);
+  })();
+
+  shared.inflight = task;
+  return task;
+}
+
+export function useVault(walletAddress: string | null) {
+  const [, forceRender] = useState(0);
+  const addrRef = useRef(walletAddress);
+  addrRef.current = walletAddress;
 
   useEffect(() => {
-    refresh();
-    const interval = setInterval(refresh, 30_000); // refresh every 30s
-    return () => clearInterval(interval);
-  }, [refresh]);
+    const listener: Listener = () => forceRender((n) => n + 1);
+    shared.listeners.add(listener);
+
+    const needsRefresh =
+      Date.now() - shared.lastFetched > STALE_MS ||
+      shared.lpAddress !== walletAddress;
+    if (needsRefresh) fetchAll(walletAddress);
+
+    if (!shared.interval) {
+      shared.interval = setInterval(() => {
+        fetchAll(addrRef.current);
+      }, REFRESH_MS);
+    }
+
+    return () => {
+      shared.listeners.delete(listener);
+      if (shared.listeners.size === 0 && shared.interval) {
+        clearInterval(shared.interval);
+        shared.interval = null;
+      }
+    };
+  }, [walletAddress]);
+
+  const refresh = useCallback(async () => {
+    await fetchAll(addrRef.current);
+  }, []);
 
   const deposit = useCallback(
     async (amount: bigint): Promise<TxResult> => {
-      if (!walletAddress) {
+      if (!addrRef.current) {
         return { hash: '', status: 'failed', error: 'Wallet not connected' };
       }
-      const result = await depositToVault(walletAddress, amount);
+      const result = await depositToVault(addrRef.current, amount);
       if (result.status === 'confirmed') {
-        await refresh();
+        await fetchAll(addrRef.current);
       }
       return result;
     },
-    [walletAddress, refresh]
+    []
   );
 
   const withdraw = useCallback(
     async (shares: bigint): Promise<TxResult> => {
-      if (!walletAddress) {
+      if (!addrRef.current) {
         return { hash: '', status: 'failed', error: 'Wallet not connected' };
       }
-      const result = await withdrawFromVault(walletAddress, shares);
+      const result = await withdrawFromVault(addrRef.current, shares);
       if (result.status === 'confirmed') {
-        await refresh();
+        await fetchAll(addrRef.current);
       }
       return result;
     },
-    [walletAddress, refresh]
+    []
   );
 
-  return { vaultInfo, lpInfo, loading, error, refresh, deposit, withdraw };
+  return {
+    vaultInfo: shared.vaultInfo,
+    lpInfo: walletAddress && shared.lpAddress === walletAddress ? shared.lpInfo : null,
+    loading: shared.loading,
+    error: shared.error,
+    refresh,
+    deposit,
+    withdraw,
+  };
 }

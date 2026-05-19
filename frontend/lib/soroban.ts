@@ -119,10 +119,14 @@ export async function buildAndSubmitTx(
     const assembled = SorobanRpc.assembleTransaction(tx, simResult).build();
 
     // Sign via whichever wallet the user connected (Freighter, xBull, Lobstr, etc.)
-    const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit');
+    // Import from /sdk to share the same static instance that useWallet initializes.
+    const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit/sdk');
     const { signedTxXdr: signedXdr } = await StellarWalletsKit.signTransaction(
       assembled.toXDR(),
-      { networkPassphrase: getNetworkPassphrase() }
+      {
+        networkPassphrase: getNetworkPassphrase(),
+        address: sourceAddress,
+      }
     );
 
     // Deserialize and submit
