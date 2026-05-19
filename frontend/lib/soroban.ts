@@ -178,11 +178,11 @@ export async function buildAndSubmitTx(
 export async function getVaultInfo(): Promise<VaultInfo> {
   const raw = (await readContract(CONTRACT_IDS.vault, 'get_vault_info')) as Record<string, unknown>;
   return {
-    tvl: BigInt(raw.tvl as number),
-    totalShares: BigInt(raw.total_shares as number),
-    locked: BigInt(raw.locked as number),
-    available: BigInt(raw.available as number),
-    sharePrice: BigInt(raw.share_price as number),
+    tvl: BigInt(raw.tvl as bigint | number),
+    totalShares: BigInt(raw.total_shares as bigint | number),
+    locked: BigInt(raw.locked as bigint | number),
+    available: BigInt(raw.available as bigint | number),
+    sharePrice: BigInt(raw.share_price as bigint | number),
   };
 }
 
@@ -192,16 +192,16 @@ export async function getLpInfo(address: string): Promise<LpInfo> {
     new Address(address).toScVal(),
   ])) as Record<string, unknown>;
   return {
-    shares: BigInt(raw.shares as number),
-    usdcValue: BigInt(raw.usdc_value as number),
-    shareOfPoolBps: raw.share_of_pool_bps as number,
+    shares: BigInt(raw.shares as bigint | number),
+    usdcValue: BigInt(raw.usdc_value as bigint | number),
+    shareOfPoolBps: Number(raw.share_of_pool_bps as bigint | number),
   };
 }
 
 /** Fetch spot price from pricing engine. */
 export async function getSpotPrice(): Promise<bigint> {
   const raw = await readContract(CONTRACT_IDS.pricingEngine, 'get_spot_price');
-  return BigInt(raw as number);
+  return BigInt(raw as bigint | number);
 }
 
 /** Fetch active strikes for a given expiry. */
@@ -211,10 +211,10 @@ export async function getStrikes(expiry: number): Promise<StrikeInfo[]> {
   ])) as Array<Record<string, unknown>>;
 
   return raw.map((s) => ({
-    strike: BigInt(s.strike as number),
-    expiry: Number(s.expiry),
-    callPremium: BigInt(s.call_premium as number),
-    putPremium: BigInt(s.put_premium as number),
+    strike: BigInt(s.strike as bigint | number),
+    expiry: Number(s.expiry as bigint | number),
+    callPremium: BigInt(s.call_premium as bigint | number),
+    putPremium: BigInt(s.put_premium as bigint | number),
   }));
 }
 
@@ -246,8 +246,8 @@ export async function fetchLivePremiums(
       ]);
       return {
         ...s,
-        callPremium: BigInt(callRaw as number),
-        putPremium: BigInt(putRaw as number),
+        callPremium: BigInt(callRaw as bigint | number),
+        putPremium: BigInt(putRaw as bigint | number),
       };
     })
   );
@@ -259,11 +259,11 @@ export async function fetchLivePremiums(
 export async function getUserPositions(address: string): Promise<Position[]> {
   const ids = (await readContract(CONTRACT_IDS.optionMarket, 'get_user_positions', [
     new Address(address).toScVal(),
-  ])) as number[];
+  ])) as Array<bigint | number>;
 
   const positions: Position[] = [];
   for (const id of ids) {
-    const pos = await getPosition(id);
+    const pos = await getPosition(Number(id));
     positions.push(pos);
   }
   return positions;
@@ -276,16 +276,16 @@ export async function getPosition(positionId: number): Promise<Position> {
   ])) as Record<string, unknown>;
 
   return {
-    id: raw.id as number,
+    id: Number(raw.id as bigint | number),
     owner: raw.owner as string,
     optionType: (raw.option_type as Record<string, unknown>).Call !== undefined ? 'Call' : 'Put',
-    strike: BigInt(raw.strike as number),
-    expiry: raw.expiry as number,
-    amount: raw.amount as number,
-    premiumPaid: BigInt(raw.premium_paid as number),
-    lockedAmount: BigInt(raw.locked_amount as number),
+    strike: BigInt(raw.strike as bigint | number),
+    expiry: Number(raw.expiry as bigint | number),
+    amount: Number(raw.amount as bigint | number),
+    premiumPaid: BigInt(raw.premium_paid as bigint | number),
+    lockedAmount: BigInt(raw.locked_amount as bigint | number),
     settled: raw.settled as boolean,
-    payout: BigInt(raw.payout as number),
+    payout: BigInt(raw.payout as bigint | number),
     claimed: raw.claimed as boolean,
   };
 }
@@ -305,8 +305,8 @@ export async function getSettlement(expiry: number): Promise<SettlementInfo> {
   ])) as Record<string, unknown>;
 
   return {
-    settlementPrice: BigInt(raw.settlement_price as number),
-    settledAt: raw.settled_at as number,
+    settlementPrice: BigInt(raw.settlement_price as bigint | number),
+    settledAt: Number(raw.settled_at as bigint | number),
     settledBy: raw.settled_by as string,
   };
 }
