@@ -8,7 +8,7 @@ interface VaultStatsProps {
 }
 
 export function VaultStats({ walletAddress }: VaultStatsProps) {
-  const { vaultInfo, lpInfo, loading } = useVault(walletAddress);
+  const { vaultInfo, lpInfo } = useVault(walletAddress);
 
   const utilizationRate =
     vaultInfo && vaultInfo.tvl > 0n
@@ -53,13 +53,13 @@ export function VaultStats({ walletAddress }: VaultStatsProps) {
           >
             <span className="label mb-2">{stat.label}</span>
             <div className="mt-1">
-              {loading || !stat.value ? (
+              {!stat.value ? (
                 <span className="skeleton h-7 w-24 inline-block" />
               ) : (
                 <span className="data-val text-[22px] text-white tabular">{stat.value}</span>
               )}
             </div>
-            {stat.sub && !loading && (
+            {stat.sub && stat.value && (
               <p className="text-[11px] text-white/25 mt-1 font-sans">{stat.sub}</p>
             )}
           </div>
