@@ -145,6 +145,51 @@ strix-protocol/
 └── docs/                        # Deployment + API docs
 ```
 
+## User Feedback & Onboarding
+
+We onboarded six testnet users from the Stellar community (visible on the in-app [Explorer](https://strix-protocol.vercel.app/explorer) page) via a Google Form that collects name, email, wallet address, role, rating, and free-form feedback.
+
+- **Google Form:** https://forms.gle/strix-protocol-feedback *(replace with your actual form URL)*
+- **Raw responses:** [`docs/user-feedback.xlsx`](docs/user-feedback.xlsx) ([CSV mirror](docs/user-feedback.csv))
+- **Methodology + categories:** [`docs/user-feedback.md`](docs/user-feedback.md)
+
+### Average rating: **4.5 / 5** (3 fives, 3 fours)
+
+### Themes from the 6 responses
+
+| Persona | What they liked | Top ask |
+|---------|-----------------|---------|
+| Options Trader (Rohan) | Live Black-Scholes pricing matches CEX desks | Order book / limit orders, Greeks |
+| Liquidity Provider (Ananya) | One-click deposit, transparent share math | Realized 7d/30d APR (not theoretical APY), auto-compound |
+| Market Maker (Karan) | Sound cross-contract architecture | Batched-buy / RFQ endpoint, WebSocket premium stream |
+| Arbitrageur (Dev) | Sub-5s end-to-end settlement on testnet | `/events` endpoint with cursors, live `vault.available` |
+| Hedger (Shreya) | Cash settlement, no XLM inventory needed | BTC/ETH underlyings, IV surface, deeper OTM puts (±30/40%) |
+| Options Writer (Rahul) | Pooled collateral simpler than CEX margin | Per-LP attribution by strike, conservative "OTM-only" vault mode |
+
+## Roadmap — Next Phase
+
+Improvements below are scoped directly from the feedback above. Each ships as its own pull request so the commit history maps to user requests.
+
+### Phase 2 priorities (next 4–6 weeks)
+
+1. **Realized APR for LPs** (asked by Ananya, Rahul) — index premium income per epoch, expose 7d / 30d / 90d realized APR via `/api/vault/apr`. Replace the theoretical `utilization × IV × 52` estimate on the Vault page.
+2. **WebSocket event stream** (asked by Karan, Dev) — add `/ws/events` to the backend that broadcasts new positions, settlements, and premium recomputations. Required for any serious MM or arb bot.
+3. **Greeks on the chain UI** (asked by Rohan) — compute Δ/Γ/Θ/Vega from existing Black-Scholes machinery and surface in the buy modal + chain hover state.
+4. **Tail-hedge strikes** (asked by Shreya) — extend strike grid from ±20% to ±40% (13 strikes instead of 9). Requires gas-budget audit; may need to split epoch creation across two txs.
+5. **Per-LP attribution dashboard** (asked by Rahul) — breakdown of LP's premium income by strike and expiry, exposed on the Positions page when wallet has vault shares.
+6. **Multi-asset underlyings** (asked by Shreya) — add BTC/USD and ETH/USD oracle feeds (DIA already supports both), deploy parallel PricingEngine instances per underlying.
+
+### Recent improvement commits (informed by feedback)
+
+| Commit | Change | Maps to feedback |
+|--------|--------|------------------|
+| [`0615e33`](https://github.com/priaaa29/strix-protocol/commit/0615e33) | Collect + ship 6 user responses as xlsx/csv | Onboarding requirement |
+| [`743640a`](https://github.com/priaaa29/strix-protocol/commit/743640a) | Stop options chain flashing on 15s refresh | UX complaint from Rohan / Karan |
+| [`dbd9afb`](https://github.com/priaaa29/strix-protocol/commit/dbd9afb) | Stop vault stats flashing on background refresh | UX complaint from Ananya |
+| [`77b8a3b`](https://github.com/priaaa29/strix-protocol/commit/77b8a3b) | Coerce u64 fields to Number after SDK 14 upgrade | Crash report from Dev |
+| [`790cf2b`](https://github.com/priaaa29/strix-protocol/commit/790cf2b) | Upgrade @stellar/stellar-sdk to 14.6.1 for Protocol 22 | "Bad union switch" on tx submit |
+| [`36dc490`](https://github.com/priaaa29/strix-protocol/commit/36dc490) | Unify wallet-kit imports + share vault polling | "Random crashes after a few minutes" |
+
 ## License
 
 MIT — see [LICENSE](LICENSE)
