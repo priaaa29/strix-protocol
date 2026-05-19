@@ -2,7 +2,42 @@
 
 **The first on-chain options protocol on Stellar.**
 
-Strix enables trustless European cash-settled options on XLM/USDC, underwritten by a peer-to-pool liquidity vault. Built entirely on Soroban smart contracts with Black-Scholes pricing powered by the Reflector oracle.
+Strix enables trustless European cash-settled options on XLM/USDC, underwritten by a peer-to-pool liquidity vault. Built entirely on Soroban smart contracts with Black-Scholes pricing powered by the DIA oracle.
+
+---
+
+## 🔗 Submission Links
+
+| Item | Link |
+|------|------|
+| **Live demo** | https://strix-protocol.vercel.app |
+| **Demo video** | _TBD — to be added after recording_ |
+| **GitHub repo** | https://github.com/priaaa29/strix-protocol |
+| **Architecture doc** | [docs/ARCHITECTURE.pdf](docs/ARCHITECTURE.pdf) |
+| **User feedback** | [docs/user-feedback.xlsx](docs/user-feedback.xlsx) · [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSdgWgjxcyvzHq-VZv0oWWZfVFfF_0XFj1OPmyg5FpOtc5diZg/viewform) |
+
+### 6 Onboarded User Wallets (verifiable on Stellar testnet)
+
+| # | Name | Role | Wallet Address |
+|---|------|------|----------------|
+| 1 | Rohan Sharma | Options Trader | [`GCSM3UOWL2H27WV6F63J6INHVYUKNRDHCRDZKVAW3NU6FNRQSZNNLGSW`](https://stellar.expert/explorer/testnet/account/GCSM3UOWL2H27WV6F63J6INHVYUKNRDHCRDZKVAW3NU6FNRQSZNNLGSW) |
+| 2 | Ananya Iyer | Liquidity Provider | [`GBMNYAW4EVLJEPI4SXNAIIW7R3XOCMRM5WMILW7MTIBADKS37SDHPGP4`](https://stellar.expert/explorer/testnet/account/GBMNYAW4EVLJEPI4SXNAIIW7R3XOCMRM5WMILW7MTIBADKS37SDHPGP4) |
+| 3 | Karan Malhotra | Market Maker | [`GCZLB4XUSS3A2K7Z6Y6D6P53EYLKDLAXWBTICCDYEPXRYOS2MAJRV2C2`](https://stellar.expert/explorer/testnet/account/GCZLB4XUSS3A2K7Z6Y6D6P53EYLKDLAXWBTICCDYEPXRYOS2MAJRV2C2) |
+| 4 | Dev Patel | Arbitrageur | [`GCHPPYWSPXPAU7LK4WX5XVPKCVS3YFTPSQFJTTA6R4PPWHNVESZVHTL4`](https://stellar.expert/explorer/testnet/account/GCHPPYWSPXPAU7LK4WX5XVPKCVS3YFTPSQFJTTA6R4PPWHNVESZVHTL4) |
+| 5 | Shreya Nair | Hedger | [`GCVE65B3HMCX75FQRXR7PK7SP2DPLH2XG6QMQHLGYXGS43PZ2HDAH5PN`](https://stellar.expert/explorer/testnet/account/GCVE65B3HMCX75FQRXR7PK7SP2DPLH2XG6QMQHLGYXGS43PZ2HDAH5PN) |
+| 6 | Rahul Verma | Options Writer | [`GAVRQTKQ7VXJMBJKHZYK7BRI5OCJDPR26WKSDMR7JEM2WWXZI4ZPPT4L`](https://stellar.expert/explorer/testnet/account/GAVRQTKQ7VXJMBJKHZYK7BRI5OCJDPR26WKSDMR7JEM2WWXZI4ZPPT4L) |
+
+Also viewable in-app at https://strix-protocol.vercel.app/explorer.
+
+### Deployed contract IDs (testnet)
+
+| Contract | ID |
+|----------|------|
+| PricingEngine | [`CBQDP42JG27QG4236ODSY6NZK4JJEUFKGAEVM4QZAF7KMJUNWQ2KRKJZ`](https://stellar.expert/explorer/testnet/contract/CBQDP42JG27QG4236ODSY6NZK4JJEUFKGAEVM4QZAF7KMJUNWQ2KRKJZ) |
+| UnderwritingVault | [`CBVZ57IO45CEPJMJNNRXVYGLNOLEFTADHREVNHNDQ45PEFVFDQTY7WHX`](https://stellar.expert/explorer/testnet/contract/CBVZ57IO45CEPJMJNNRXVYGLNOLEFTADHREVNHNDQ45PEFVFDQTY7WHX) |
+| OptionMarket | [`CCTQ3LWSSVP3ZLAXNVLXB7DTYPGFGTQ4RHDEGDKV5OT4QNO77HPYCOYX`](https://stellar.expert/explorer/testnet/contract/CCTQ3LWSSVP3ZLAXNVLXB7DTYPGFGTQ4RHDEGDKV5OT4QNO77HPYCOYX) |
+| DIA Oracle | `CAEDPEZDRCEJCF73ASC5JGNKCIJDV2QJQSW6DJ6B74MYALBNKCJ5IFP4` |
+| USDC (testnet SAC) | [`CBA4XQJCNN76UX3AQ63EKQXQMMIHTVENTXV2QNXLCOPMYIXAESQZUDZQ`](https://stellar.expert/explorer/testnet/contract/CBA4XQJCNN76UX3AQ63EKQXQMMIHTVENTXV2QNXLCOPMYIXAESQZUDZQ) |
 
 ---
 
@@ -11,15 +46,15 @@ Strix enables trustless European cash-settled options on XLM/USDC, underwritten 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     Frontend (Next.js 14)                │
-│         Freighter wallet · options chain · vault UI      │
+│      Stellar Wallets Kit · options chain · vault UI      │
 └───────────────────┬─────────────────────────────────────┘
                     │ Soroban RPC + REST API
 ┌───────────────────▼─────────────────────────────────────┐
 │   PricingEngine      UnderwritingVault    OptionMarket   │
 │  (Black-Scholes)   (share accounting)   (buy/settle/     │
-│  (Reflector RPC)   (collateral mgmt)     claim)          │
+│     (DIA RPC)      (collateral mgmt)     claim)          │
 └───────────────────┬─────────────────────────────────────┘
-                    │ Reflector oracle (on-chain)
+                    │ DIA oracle (on-chain push)
 ┌───────────────────▼─────────────────────────────────────┐
 │              Backend (Express + SQLite)                  │
 │           event indexer · REST API · cache               │
@@ -30,7 +65,7 @@ Strix enables trustless European cash-settled options on XLM/USDC, underwritten 
 
 | Contract | Description |
 |----------|-------------|
-| `PricingEngine` | Black-Scholes call/put premiums via Reflector oracle |
+| `PricingEngine` | Black-Scholes call/put premiums via DIA oracle |
 | `UnderwritingVault` | USDC deposit/withdraw, share accounting, capital management |
 | `OptionMarket` | Buy options, register strikes, settle expiries, claim payouts |
 
@@ -43,7 +78,7 @@ Strix enables trustless European cash-settled options on XLM/USDC, underwritten 
 - Rust stable + `wasm32-unknown-unknown` target
 - [stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/stellar-cli)
 - Node.js ≥ 20
-- [Freighter wallet](https://freighter.app) (browser extension)
+- A Stellar wallet (Freighter, xBull, Lobstr, Hana) — supported via [Stellar Wallets Kit](https://stellarwalletskit.dev/)
 
 ### Run Tests
 
@@ -101,7 +136,7 @@ npm run dev
 ## Options Model
 
 - **Type:** European cash-settled
-- **Underlying:** XLM/USDC (via Reflector oracle)
+- **Underlying:** XLM/USDC (via DIA oracle, 8-decimal precision)
 - **Expiries:** Weekly Fridays, 16:00 UTC
 - **Strikes:** ATM ± 5/10/15/20% (9 strikes per epoch)
 - **Settlement:** Any user can call `settle()` after expiry passes
