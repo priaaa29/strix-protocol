@@ -4,7 +4,7 @@
 import {
   Contract,
   Networks,
-  SorobanRpc,
+  rpc,
   Transaction,
   TransactionBuilder,
   BASE_FEE,
@@ -25,8 +25,8 @@ import type {
 
 // ── RPC Server ─────────────────────────────────────────────────────────────
 
-export function getRpcServer(): SorobanRpc.Server {
-  return new SorobanRpc.Server(NETWORK_CONFIG.rpcUrl, { allowHttp: false });
+export function getRpcServer(): rpc.Server {
+  return new rpc.Server(NETWORK_CONFIG.rpcUrl, { allowHttp: false });
 }
 
 // ── Network Passphrase ─────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ export async function readContract(
 
   const simResult = await server.simulateTransaction(tx);
 
-  if (SorobanRpc.Api.isSimulationError(simResult)) {
+  if (rpc.Api.isSimulationError(simResult)) {
     throw new Error(`Contract call failed: ${simResult.error}`);
   }
 
@@ -107,7 +107,7 @@ export async function buildAndSubmitTx(
     // Simulate first to get resource usage + footprint
     const simResult = await server.simulateTransaction(tx);
 
-    if (SorobanRpc.Api.isSimulationError(simResult)) {
+    if (rpc.Api.isSimulationError(simResult)) {
       return {
         hash: '',
         status: 'failed',
@@ -116,7 +116,7 @@ export async function buildAndSubmitTx(
     }
 
     // Assemble with simulation results
-    const assembled = SorobanRpc.assembleTransaction(tx, simResult).build();
+    const assembled = rpc.assembleTransaction(tx, simResult).build();
 
     // Sign via whichever wallet the user connected (Freighter, xBull, Lobstr, etc.)
     // Import from /sdk to share the same static instance that useWallet initializes.
@@ -152,10 +152,10 @@ export async function buildAndSubmitTx(
       await new Promise((r) => setTimeout(r, 2000));
       const status = await server.getTransaction(hash);
 
-      if (status.status === SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+      if (status.status === rpc.Api.GetTransactionStatus.SUCCESS) {
         return { hash, status: 'confirmed' };
       }
-      if (status.status === SorobanRpc.Api.GetTransactionStatus.FAILED) {
+      if (status.status === rpc.Api.GetTransactionStatus.FAILED) {
         return {
           hash,
           status: 'failed',
