@@ -40,7 +40,7 @@ export function OptionsChain({ walletAddress }: OptionsChainProps) {
   const isExpired = expiry <= now;
   const sortedStrikes = [...strikes].sort((a, b) => Number(b.strike - a.strike));
 
-  if (loading) {
+  if (loading && strikes.length === 0) {
     return (
       <div className="space-y-5 animate-enter">
         <div className="skeleton h-9 w-full rounded-2xl" />
@@ -59,7 +59,7 @@ export function OptionsChain({ walletAddress }: OptionsChainProps) {
     );
   }
 
-  if (error) {
+  if (error && strikes.length === 0) {
     return (
       <div className="border border-rust/25 bg-rust/[0.06] rounded-2xl p-5 animate-enter">
         <p className="text-sm text-rust">{error}</p>
