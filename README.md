@@ -149,7 +149,7 @@ strix-protocol/
 
 We onboarded six testnet users from the Stellar community (visible on the in-app [Explorer](https://strix-protocol.vercel.app/explorer) page) via a Google Form that collects name, email, wallet address, role, rating, and free-form feedback.
 
-- **Google Form:** https://forms.gle/strix-protocol-feedback *(replace with your actual form URL)*
+- **Google Form:** https://docs.google.com/forms/d/e/1FAIpQLSdgWgjxcyvzHq-VZv0oWWZfVFfF_0XFj1OPmyg5FpOtc5diZg/viewform
 - **Raw responses:** [`docs/user-feedback.xlsx`](docs/user-feedback.xlsx) ([CSV mirror](docs/user-feedback.csv))
 - **Methodology + categories:** [`docs/user-feedback.md`](docs/user-feedback.md)
 
