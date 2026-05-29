@@ -5,7 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { SorobanRpc } from '@stellar/stellar-sdk';
-import { initDatabase, getDb } from './indexer/db';
+import { initDatabase, getDb, getLastIndexedBlock } from './indexer/db';
 import { startEventListener, stopEventListener } from './indexer/eventListener';
 import { startSettlementKeeper, stopSettlementKeeper } from './settlement-keeper';
 import positionsRouter from './api/positions';
@@ -86,6 +86,7 @@ app.use('/api/feedback', feedbackRouter);
 
 app.get('/health', async (_req, res) => {
   const checks: Record<string, string> = {};
+  const detail: Record<string, unknown> = {};
 
   // DB check
   try {
@@ -98,18 +99,45 @@ app.get('/health', async (_req, res) => {
   // RPC check
   try {
     const server = new SorobanRpc.Server(RPC_URL, { allowHttp: false });
-    await server.getLatestLedger();
+    const ledger = await server.getLatestLedger();
     checks.rpc = 'ok';
+    detail.latest_ledger = ledger.sequence;
   } catch {
     checks.rpc = 'error';
   }
 
-  const healthy = Object.values(checks).every(v => v === 'ok');
+  // Indexer freshness check — last_indexed_at within 5 minutes of "now"
+  try {
+    const last = getLastIndexedBlock();
+    const now = Math.floor(Date.now() / 1000);
+    const lagSec = last === 0 ? -1 : now - last;
+    detail.indexer_last_event_unix = last;
+    detail.indexer_lag_seconds = lagSec;
+    if (last === 0) {
+      checks.indexer = 'no_events_yet';
+    } else if (lagSec < 300) {
+      checks.indexer = 'ok';
+    } else {
+      checks.indexer = 'stale';
+    }
+  } catch {
+    checks.indexer = 'error';
+  }
+
+  const healthy = checks.db === 'ok' && checks.rpc === 'ok'
+    && (checks.indexer === 'ok' || checks.indexer === 'no_events_yet');
   res.status(healthy ? 200 : 503).json({
     status: healthy ? 'ok' : 'degraded',
-    uptime: Math.floor(process.uptime()),
-    ...checks,
+    uptime_seconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    checks,
+    detail,
   });
+});
+
+// Also expose under /api/health for convention
+app.get('/api/health', async (_req, res) => {
+  res.redirect(307, '/health');
 });
 
 // 404 handler

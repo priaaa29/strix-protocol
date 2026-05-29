@@ -23,11 +23,12 @@ function getNextFriday(): number {
 }
 
 const ALL_NAV = [
-  { href: '/',          label: 'Dashboard', short: 'HOME', Icon: IconGrid,     testnetOnly: false },
-  { href: '/options',   label: 'Options',   short: 'OPTS', Icon: IconChart,    testnetOnly: false },
-  { href: '/vault',     label: 'Vault',     short: 'VAULT', Icon: IconVault,   testnetOnly: false },
-  { href: '/positions', label: 'Positions', short: 'POS',  Icon: IconList,     testnetOnly: false },
-  { href: '/explorer',  label: 'Explorer',  short: 'EXP',  Icon: IconExplorer, testnetOnly: true  },
+  { href: '/',          label: 'Dashboard', short: 'HOME',  Icon: IconGrid,     testnetOnly: false },
+  { href: '/options',   label: 'Options',   short: 'OPTS',  Icon: IconChart,    testnetOnly: false },
+  { href: '/vault',     label: 'Vault',     short: 'VAULT', Icon: IconVault,    testnetOnly: false },
+  { href: '/positions', label: 'Positions', short: 'POS',   Icon: IconList,     testnetOnly: false },
+  { href: '/metrics',   label: 'Metrics',   short: 'METS',  Icon: IconMetrics,  testnetOnly: false },
+  { href: '/explorer',  label: 'Explorer',  short: 'EXP',   Icon: IconExplorer, testnetOnly: true  },
 ] as const;
 
 const NAV = ALL_NAV.filter(n => !n.testnetOnly || IS_TESTNET);
@@ -342,6 +343,17 @@ function IconList({ className }: { className?: string }) {
       <circle cx="1.8" cy="3.5"  r="1.2" fill="currentColor" stroke="none" />
       <circle cx="1.8" cy="7"    r="1.2" fill="currentColor" stroke="none" />
       <circle cx="1.8" cy="10.5" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconMetrics({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="1.5" y1="12.5" x2="12.5" y2="12.5" />
+      <rect x="2.5" y="8" width="1.8" height="4" />
+      <rect x="6" y="5" width="1.8" height="7" />
+      <rect x="9.5" y="2" width="1.8" height="10" />
     </svg>
   );
 }

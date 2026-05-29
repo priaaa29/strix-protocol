@@ -290,6 +290,45 @@ export async function getPosition(positionId: number): Promise<Position> {
   };
 }
 
+/** Aggregate protocol-level metrics for the /metrics dashboard. */
+export interface ProtocolMetrics {
+  tvl: bigint;
+  locked: bigint;
+  available: bigint;
+  sharePrice: bigint;
+  totalShares: bigint;
+  totalPositions: number;
+  paused: boolean;
+  spotPrice: bigint;
+  oracleAddress: string;
+  pricingEngineAddress: string;
+  vaultAddress: string;
+}
+
+export async function getProtocolMetrics(): Promise<ProtocolMetrics> {
+  const [vaultInfo, config, spot] = await Promise.all([
+    getVaultInfo(),
+    readContract(CONTRACT_IDS.optionMarket, 'get_config'),
+    getSpotPrice().catch(() => 0n),
+  ]);
+
+  const cfg = config as Record<string, unknown>;
+
+  return {
+    tvl: vaultInfo.tvl,
+    locked: vaultInfo.locked,
+    available: vaultInfo.available,
+    sharePrice: vaultInfo.sharePrice,
+    totalShares: vaultInfo.totalShares,
+    totalPositions: Number(cfg.next_position_id as bigint | number),
+    paused: cfg.paused as boolean,
+    spotPrice: spot,
+    oracleAddress: cfg.oracle as string,
+    pricingEngineAddress: cfg.pricing_engine as string,
+    vaultAddress: cfg.vault as string,
+  };
+}
+
 /** Check if an expiry is settled. */
 export async function isSettled(expiry: number): Promise<boolean> {
   const raw = await readContract(CONTRACT_IDS.optionMarket, 'is_settled', [
