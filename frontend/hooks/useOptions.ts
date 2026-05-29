@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getStrikes, fetchLivePremiums, isSettled, settleExpiry, buyCall, buyPut } from '@/lib/soroban';
+import {
+  getStrikes,
+  fetchLivePremiums,
+  isSettled,
+  settleExpiry,
+  buyCall,
+  buyPut,
+  buyCallSponsored,
+  buyPutSponsored,
+} from '@/lib/soroban';
 import { fetchXlmPrice } from '@/lib/oracle';
 import type { StrikeInfo, TxResult } from '@/lib/types';
 import { PRICE_REFRESH_MS } from '@/lib/constants';
@@ -54,8 +63,10 @@ export function useOptions() {
   }, [refresh]);
 
   const buyCallOption = useCallback(
-    async (buyer: string, strike: bigint, amount: number): Promise<TxResult> => {
-      const result = await buyCall(buyer, strike, expiry, amount);
+    async (buyer: string, strike: bigint, amount: number, sponsored = false): Promise<TxResult> => {
+      const result = sponsored
+        ? await buyCallSponsored(buyer, strike, expiry, amount)
+        : await buyCall(buyer, strike, expiry, amount);
       if (result.status === 'confirmed') await refresh();
       return result;
     },
@@ -63,8 +74,10 @@ export function useOptions() {
   );
 
   const buyPutOption = useCallback(
-    async (buyer: string, strike: bigint, amount: number): Promise<TxResult> => {
-      const result = await buyPut(buyer, strike, expiry, amount);
+    async (buyer: string, strike: bigint, amount: number, sponsored = false): Promise<TxResult> => {
+      const result = sponsored
+        ? await buyPutSponsored(buyer, strike, expiry, amount)
+        : await buyPut(buyer, strike, expiry, amount);
       if (result.status === 'confirmed') await refresh();
       return result;
     },

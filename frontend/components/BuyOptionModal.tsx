@@ -17,7 +17,7 @@ interface BuyOptionModalProps {
   expiry: number;
   optionType: 'Call' | 'Put';
   walletAddress: string | null;
-  onBuy: (buyer: string, strike: bigint, amount: number) => Promise<TxResult>;
+  onBuy: (buyer: string, strike: bigint, amount: number, sponsored?: boolean) => Promise<TxResult>;
 }
 
 export function BuyOptionModal({
@@ -26,9 +26,10 @@ export function BuyOptionModal({
   const [amount, setAmount]         = useState('1');
   const [txResult, setTxResult]     = useState<TxResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sponsored, setSponsored]   = useState(true);
 
   useEffect(() => {
-    if (open) { setAmount('1'); setTxResult(null); setSubmitting(false); }
+    if (open) { setAmount('1'); setTxResult(null); setSubmitting(false); setSponsored(true); }
   }, [open]);
 
   const amountNum      = Math.max(1, Math.floor(Number(amount) || 1));
@@ -44,7 +45,7 @@ export function BuyOptionModal({
     if (!walletAddress) return;
     setSubmitting(true);
     setTxResult({ hash: '', status: 'pending' });
-    const result = await onBuy(walletAddress, strike, amountNum);
+    const result = await onBuy(walletAddress, strike, amountNum, sponsored);
     setTxResult(result);
     setSubmitting(false);
     if (result.status === 'confirmed') setTimeout(onClose, 2000);
@@ -94,6 +95,33 @@ export function BuyOptionModal({
           onChange={(e) => setAmount(e.target.value)}
           hint="Each contract covers 1 XLM at the strike price"
         />
+
+        {/* Fee sponsorship toggle */}
+        <button
+          type="button"
+          onClick={() => setSponsored(!sponsored)}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all duration-[120ms] ${
+            sponsored
+              ? 'border-mint/35 bg-mint/[0.06] hover:bg-mint/[0.10]'
+              : 'border-white/[0.10] bg-white/[0.02] hover:bg-white/[0.04]'
+          }`}
+          aria-pressed={sponsored}
+        >
+          <div className="flex items-center gap-2.5 text-left">
+            <span className={`text-[14px] leading-none ${sponsored ? 'text-mint' : 'text-white/30'}`}>⚡</span>
+            <div>
+              <p className={`text-[12px] font-sans font-semibold ${sponsored ? 'text-mint' : 'text-white/55'}`}>
+                Gasless · Protocol pays the fee
+              </p>
+              <p className="text-[10px] text-white/30 font-sans mt-0.5">
+                {sponsored ? 'Sponsored by Strix · 5 / wallet / day' : 'You pay the network fee in XLM'}
+              </p>
+            </div>
+          </div>
+          <span className={`relative inline-flex w-9 h-5 rounded-full transition-colors ${sponsored ? 'bg-mint/60' : 'bg-white/[0.10]'}`}>
+            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${sponsored ? 'translate-x-4' : 'translate-x-0.5'}`} />
+          </span>
+        </button>
 
         {/* Premium summary */}
         <div className="border border-gold/25 bg-gold/[0.05] rounded-xl px-4 py-3 space-y-1">

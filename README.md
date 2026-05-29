@@ -20,7 +20,7 @@ Strix enables trustless European cash-settled options on XLM/USDC, underwritten 
 | **Community contribution** | [Twitter launch thread (draft)](docs/twitter-post.md) — _replace with live tweet URL after posting_ |
 | **Metrics dashboard** | [Live: /metrics](https://strix-protocol.vercel.app/metrics) — TVL, utilization, position count, contract state |
 | **Monitoring** | [docs/monitoring.md](docs/monitoring.md) — `/health` endpoint, Vercel Analytics, live `/metrics` page |
-| **Advanced feature** | Fee Sponsorship — _in progress (see Roadmap)_ |
+| **Advanced feature** | Fee Sponsorship — [docs/fee-sponsorship.md](docs/fee-sponsorship.md) · [/api/sponsor](https://strix-protocol.vercel.app/api/sponsor) · sponsor: [`GDNR…6IIY`](https://stellar.expert/explorer/testnet/account/GDNRA5KBR2N5UK2VCI7EG3MLNZCUQUWRNAOHCYQ62M7QOHJSYPMG6IIY) |
 
 ### 30 Onboarded User Wallets (verifiable on Stellar testnet)
 

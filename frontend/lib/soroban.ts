@@ -172,6 +172,122 @@ export async function buildAndSubmitTx(
   }
 }
 
+/**
+ * Build + sign a contract call exactly like buildAndSubmitTx, but submit
+ * the signed inner XDR to /api/sponsor for fee-bump wrapping by the
+ * protocol sponsor account. User pays no XLM fee.
+ *
+ * Only contracts where the sponsor has whitelisted the method (currently
+ * OptionMarket.buy_call and OptionMarket.buy_put) will succeed; everything
+ * else returns 400 from the API.
+ */
+export async function buildAndSubmitSponsoredTx(
+  contractId: string,
+  method: string,
+  args: xdr.ScVal[],
+  sourceAddress: string
+): Promise<TxResult> {
+  const server = getRpcServer();
+
+  try {
+    const account = await server.getAccount(sourceAddress);
+    const contract = new Contract(contractId);
+    let tx = new TransactionBuilder(account, {
+      fee: BASE_FEE,
+      networkPassphrase: getNetworkPassphrase(),
+    })
+      .addOperation(contract.call(method, ...args))
+      .setTimeout(30)
+      .build();
+
+    const simResult = await server.simulateTransaction(tx);
+    if (rpc.Api.isSimulationError(simResult)) {
+      return { hash: '', status: 'failed', error: parseContractError(simResult.error) };
+    }
+    const assembled = rpc.assembleTransaction(tx, simResult).build();
+
+    const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit/sdk');
+    const { signedTxXdr: signedXdr } = await StellarWalletsKit.signTransaction(
+      assembled.toXDR(),
+      { networkPassphrase: getNetworkPassphrase(), address: sourceAddress }
+    );
+
+    // Submit to sponsor endpoint instead of the network directly
+    const sponsorRes = await fetch('/api/sponsor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ innerXdr: signedXdr }),
+    });
+
+    const sponsorJson = await sponsorRes.json().catch(() => ({}));
+    if (!sponsorRes.ok || !sponsorJson.hash) {
+      return {
+        hash: '',
+        status: 'failed',
+        error: sponsorJson.error || `Sponsor service returned ${sponsorRes.status}`,
+      };
+    }
+
+    // Poll for confirmation — same logic as buildAndSubmitTx
+    const hash = sponsorJson.hash as string;
+    let attempts = 0;
+    while (attempts < 30) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const status = await server.getTransaction(hash);
+      if (status.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+        return { hash, status: 'confirmed' };
+      }
+      if (status.status === rpc.Api.GetTransactionStatus.FAILED) {
+        return { hash, status: 'failed', error: 'Transaction execution failed on-chain' };
+      }
+      attempts++;
+    }
+    return { hash, status: 'failed', error: 'Transaction confirmation timeout' };
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err.message : String(err);
+    return { hash: '', status: 'failed', error: parseContractError(error) };
+  }
+}
+
+/** Sponsored variants of buy_call / buy_put — fee paid by the protocol sponsor. */
+export async function buyCallSponsored(
+  buyer: string,
+  strike: bigint,
+  expiry: number,
+  amount: number
+): Promise<TxResult> {
+  return buildAndSubmitSponsoredTx(
+    CONTRACT_IDS.optionMarket,
+    'buy_call',
+    [
+      new Address(buyer).toScVal(),
+      nativeToScVal(strike, { type: 'i128' }),
+      nativeToScVal(expiry, { type: 'u64' }),
+      nativeToScVal(amount, { type: 'u64' }),
+    ],
+    buyer
+  );
+}
+
+export async function buyPutSponsored(
+  buyer: string,
+  strike: bigint,
+  expiry: number,
+  amount: number
+): Promise<TxResult> {
+  return buildAndSubmitSponsoredTx(
+    CONTRACT_IDS.optionMarket,
+    'buy_put',
+    [
+      new Address(buyer).toScVal(),
+      nativeToScVal(strike, { type: 'i128' }),
+      nativeToScVal(expiry, { type: 'u64' }),
+      nativeToScVal(amount, { type: 'u64' }),
+    ],
+    buyer
+  );
+}
+
 // ── High-level Contract Calls ──────────────────────────────────────────────
 
 /** Fetch vault state. */

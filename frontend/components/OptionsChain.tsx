@@ -31,9 +31,14 @@ export function OptionsChain({ walletAddress }: OptionsChainProps) {
     setSettling(false);
   };
 
-  const handleBuy = async (buyer: string, strike: bigint, amount: number): Promise<TxResult> => {
-    if (modal?.optionType === 'Call') return buyCallOption(buyer, strike, amount);
-    return buyPutOption(buyer, strike, amount);
+  const handleBuy = async (
+    buyer: string,
+    strike: bigint,
+    amount: number,
+    sponsored = false
+  ): Promise<TxResult> => {
+    if (modal?.optionType === 'Call') return buyCallOption(buyer, strike, amount, sponsored);
+    return buyPutOption(buyer, strike, amount, sponsored);
   };
 
   const now = Math.floor(Date.now() / 1000);
