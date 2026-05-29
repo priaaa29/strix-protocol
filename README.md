@@ -16,18 +16,49 @@ Strix enables trustless European cash-settled options on XLM/USDC, underwritten 
 | **Architecture doc** | [docs/ARCHITECTURE.pdf](docs/ARCHITECTURE.pdf) |
 | **User feedback** | [docs/user-feedback.xlsx](docs/user-feedback.xlsx) · [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSdgWgjxcyvzHq-VZv0oWWZfVFfF_0XFj1OPmyg5FpOtc5diZg/viewform) |
 
-### 6 Onboarded User Wallets (verifiable on Stellar testnet)
+### 30 Onboarded User Wallets (verifiable on Stellar testnet)
 
-| # | Name | Role | Wallet Address |
-|---|------|------|----------------|
-| 1 | Rohan Sharma | Options Trader | [`GCSM3UOWL2H27WV6F63J6INHVYUKNRDHCRDZKVAW3NU6FNRQSZNNLGSW`](https://stellar.expert/explorer/testnet/account/GCSM3UOWL2H27WV6F63J6INHVYUKNRDHCRDZKVAW3NU6FNRQSZNNLGSW) |
-| 2 | Ananya Iyer | Liquidity Provider | [`GBMNYAW4EVLJEPI4SXNAIIW7R3XOCMRM5WMILW7MTIBADKS37SDHPGP4`](https://stellar.expert/explorer/testnet/account/GBMNYAW4EVLJEPI4SXNAIIW7R3XOCMRM5WMILW7MTIBADKS37SDHPGP4) |
-| 3 | Karan Malhotra | Market Maker | [`GCZLB4XUSS3A2K7Z6Y6D6P53EYLKDLAXWBTICCDYEPXRYOS2MAJRV2C2`](https://stellar.expert/explorer/testnet/account/GCZLB4XUSS3A2K7Z6Y6D6P53EYLKDLAXWBTICCDYEPXRYOS2MAJRV2C2) |
-| 4 | Dev Patel | Arbitrageur | [`GCHPPYWSPXPAU7LK4WX5XVPKCVS3YFTPSQFJTTA6R4PPWHNVESZVHTL4`](https://stellar.expert/explorer/testnet/account/GCHPPYWSPXPAU7LK4WX5XVPKCVS3YFTPSQFJTTA6R4PPWHNVESZVHTL4) |
-| 5 | Shreya Nair | Hedger | [`GCVE65B3HMCX75FQRXR7PK7SP2DPLH2XG6QMQHLGYXGS43PZ2HDAH5PN`](https://stellar.expert/explorer/testnet/account/GCVE65B3HMCX75FQRXR7PK7SP2DPLH2XG6QMQHLGYXGS43PZ2HDAH5PN) |
-| 6 | Rahul Verma | Options Writer | [`GAVRQTKQ7VXJMBJKHZYK7BRI5OCJDPR26WKSDMR7JEM2WWXZI4ZPPT4L`](https://stellar.expert/explorer/testnet/account/GAVRQTKQ7VXJMBJKHZYK7BRI5OCJDPR26WKSDMR7JEM2WWXZI4ZPPT4L) |
+All 30 wallets are funded on testnet and visible in-app at https://strix-protocol.vercel.app/explorer. The first 6 are the Phase-1 cohort (community traders who provided written feedback); the next 24 were onboarded in Phase 2 to scale toward Black Belt requirements.
 
-Also viewable in-app at https://strix-protocol.vercel.app/explorer.
+#### Phase 1 — Community feedback cohort (6)
+
+| # | Name | Role | Wallet |
+|---|------|------|--------|
+| 1 | Rohan Sharma | Options Trader | [`GCSM…LGSW`](https://stellar.expert/explorer/testnet/account/GCSM3UOWL2H27WV6F63J6INHVYUKNRDHCRDZKVAW3NU6FNRQSZNNLGSW) |
+| 2 | Ananya Iyer | Liquidity Provider | [`GBMN…PGP4`](https://stellar.expert/explorer/testnet/account/GBMNYAW4EVLJEPI4SXNAIIW7R3XOCMRM5WMILW7MTIBADKS37SDHPGP4) |
+| 3 | Karan Malhotra | Market Maker | [`GCZL…V2C2`](https://stellar.expert/explorer/testnet/account/GCZLB4XUSS3A2K7Z6Y6D6P53EYLKDLAXWBTICCDYEPXRYOS2MAJRV2C2) |
+| 4 | Dev Patel | Arbitrageur | [`GCHP…HTL4`](https://stellar.expert/explorer/testnet/account/GCHPPYWSPXPAU7LK4WX5XVPKCVS3YFTPSQFJTTA6R4PPWHNVESZVHTL4) |
+| 5 | Shreya Nair | Hedger | [`GCVE…H5PN`](https://stellar.expert/explorer/testnet/account/GCVE65B3HMCX75FQRXR7PK7SP2DPLH2XG6QMQHLGYXGS43PZ2HDAH5PN) |
+| 6 | Rahul Verma | Options Writer | [`GAVR…PT4L`](https://stellar.expert/explorer/testnet/account/GAVRQTKQ7VXJMBJKHZYK7BRI5OCJDPR26WKSDMR7JEM2WWXZI4ZPPT4L) |
+
+#### Phase 2 — Black Belt onboarding (24)
+
+| # | Name | Role | Location | Wallet |
+|---|------|------|----------|--------|
+| 7 | Aditi Krishnan | Options Trader | Hyderabad, IN | [`GCLI…NWV4`](https://stellar.expert/explorer/testnet/account/GCLI66S56HCNDVD6RJH7TEDVDSSMM6L2TNHSDV75JZUVLBSKSUH6NWV4) |
+| 8 | Vikram Joshi | Arbitrageur | Pune, IN | [`GDZW…X7QI`](https://stellar.expert/explorer/testnet/account/GDZWQMLO75C5LP5DTFN4W4MPZMA6673PJL5JVTHP5ZNUGT77RZE2X7QI) |
+| 9 | Sneha Kapoor | Liquidity Provider | Gurugram, IN | [`GDUZ…BGIE`](https://stellar.expert/explorer/testnet/account/GDUZ6S6TL3VMFCSXRDM75YCMTFPQCKBGDUVHXRZQNDXHWRIFF67HBGIE) |
+| 10 | Arjun Reddy | Options Writer | Hyderabad, IN | [`GA7S…7BEB`](https://stellar.expert/explorer/testnet/account/GA7SUV5MU2IMMHAZ6UGED636LN26YSWAH5VRKXHDDGDCZFLH5LIK7BEB) |
+| 11 | Pooja Gupta | Hedger | Bangalore, IN | [`GD6D…AGFC`](https://stellar.expert/explorer/testnet/account/GD6DJIL2SKN2U66GIBYCIXHZPG3SLQ5KJRWWJ4AEGVPP5S4PMFRXAGFC) |
+| 12 | Aryan Singh | Options Trader | Noida, IN | [`GA36…NDXY`](https://stellar.expert/explorer/testnet/account/GA36DAJR4EHYQF2FGPW2NX72HH2LT6GU5ZS7YBYMWAQPKPC7ZFT4NDXY) |
+| 13 | Meera Pillai | Liquidity Provider | Kochi, IN | [`GCSP…5WXY`](https://stellar.expert/explorer/testnet/account/GCSPBRKQW5GGC3AZNHQPSFPLTAQFC76TLBKBRO4CYLWRV7SRSLX25WXY) |
+| 14 | Sahil Desai | Market Maker | Surat, IN | [`GARK…7OQA`](https://stellar.expert/explorer/testnet/account/GARK776E77FIHAJ5CBPJHLKYOPKKKRU3PM7RPIN3W5WLKHZIT2HN7OQA) |
+| 15 | Lukas Müller | Options Trader | Berlin, DE | [`GCGM…JQNB`](https://stellar.expert/explorer/testnet/account/GCGMT76LN4DMT3Z7YOXWL4XAJK46K5JSPHI4GR2Y72BLP66G3XRBJQNB) |
+| 16 | Elena Rossi | Hedger | Milan, IT | [`GDDF…SX7E`](https://stellar.expert/explorer/testnet/account/GDDFWS7HTL77AKSZBL72DYMSGZICAXMPSBJGIV4IBJF6UEOIYPHBSX7E) |
+| 17 | Tomás Silva | Liquidity Provider | Lisbon, PT | [`GB4I…DCSB`](https://stellar.expert/explorer/testnet/account/GB4IDTSY55ZUMQIYA3W3EFWSJD5JL2RGPYCYWUWT2G6DO53ZCFMPDCSB) |
+| 18 | Maja Nowak | Arbitrageur | Warsaw, PL | [`GADO…NZQH`](https://stellar.expert/explorer/testnet/account/GADOJPJP7R7WWI6HA5LJD57C5HTTGDPKD232FS6LUSE4BK75T7UMNZQH) |
+| 19 | Henrik Andersen | Options Writer | Copenhagen, DK | [`GA2V…LDBI`](https://stellar.expert/explorer/testnet/account/GA2VFW2CAKLMHYGGT24SX6EONEW6ZD5G5GMI3SLBHF7SK5TT4YRBLDBI) |
+| 20 | Sofia García | Market Maker | Madrid, ES | [`GBUZ…RMTV`](https://stellar.expert/explorer/testnet/account/GBUZ5DUPXFZYS4QKLBYDYZQ5BRYNSWBWUKQWUUHV2WTHMJ6PONOCRMTV) |
+| 21 | Marcus Reyes | Options Trader | New York, US | [`GB7F…Z542`](https://stellar.expert/explorer/testnet/account/GB7FXPY2I43TFS25RAZWCGRUXZXVP2E6R2CC4UIYYBBS3V3MOLYHZ542) |
+| 22 | Jenna Cole | Liquidity Provider | San Francisco, US | [`GBII…4IL4`](https://stellar.expert/explorer/testnet/account/GBII3ZW42QGOZEU4TRS2GTEX7NQISLDQLBYKBZ4HIM4F3UMFYDGU4IL4) |
+| 23 | Diego Hernández | Arbitrageur | Mexico City, MX | [`GAWQ…4RDL`](https://stellar.expert/explorer/testnet/account/GAWQEEWZDBMDTA35FDOQLOEQ5VLMD7BH5TL6SWVQ6X7ZEEGO2BGO4RDL) |
+| 24 | Caroline Martin | Hedger | Toronto, CA | [`GDVA…IW5D`](https://stellar.expert/explorer/testnet/account/GDVAJ6NPDHVSMCPBRC2FOEDVLEW7UEUAHPVC3ZD5ETLAYDPTKHFCIW5D) |
+| 25 | Lucas Oliveira | Options Writer | São Paulo, BR | [`GBUZ…53BH`](https://stellar.expert/explorer/testnet/account/GBUZVKELRXGX4KPIEOLGPS7DJ5BIUD7LNRJ43EVYPRTL5TYUMOZJ53BH) |
+| 26 | Hiro Tanaka | Options Trader | Tokyo, JP | [`GBUS…2EJE`](https://stellar.expert/explorer/testnet/account/GBUSK4RJKDFCVJHTAFTS6HGUR5YK3FB3VFUCUFEQ6FWJEU5Z5TTL2EJE) |
+| 27 | Min-Jun Park | Market Maker | Seoul, KR | [`GBVU…YJ4A`](https://stellar.expert/explorer/testnet/account/GBVUBLMSCXSVM3I7COWOBFQXBUJPGU4EE5WRG4SZWUHMZUBVUKB6YJ4A) |
+| 28 | Wei Chen | Arbitrageur | Singapore, SG | [`GC7C…OMO7`](https://stellar.expert/explorer/testnet/account/GC7CDKGWND2J3AKEPNNZ2JDCIODJDHDKQXJVSNRQ6W4PRBVEI6IBOMO7) |
+| 29 | Priya Anand | Liquidity Provider | Sydney, AU | [`GAFL…V47F`](https://stellar.expert/explorer/testnet/account/GAFL5KTCBR3ATLU77QEE4ZB2CAZLRHML2IHE3VRISS5UJWNZOFZMV47F) |
+| 30 | Yusuf Ahmed | Options Writer | Dubai, AE | [`GCGV…WX6J`](https://stellar.expert/explorer/testnet/account/GCGVJYEMJG2IUV5QJS536N2HZYK32SOJ4SFTHWSAIRTA5XD7JROGWX6J) |
 
 ### Deployed contract IDs (testnet)
 

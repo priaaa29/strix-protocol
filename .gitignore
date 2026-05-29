@@ -50,3 +50,4 @@ Resources/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+scripts/.onboarded-secrets.json
