@@ -53,7 +53,7 @@ Audit performed against [OWASP Top 10 for Smart Contracts](https://owasp.org/www
 
 | # | Check | Status | Evidence |
 |---|-------|--------|----------|
-| F1 | Frontend never holds private keys — all signing via wallet | ✅ | Uses `@creit.tech/stellar-wallets-kit` only; no `Keypair.fromSecret` in `frontend/` |
+| F1 | Frontend never holds private keys — all signing via wallet | ✅ | Uses `@creit.tech/stellar-wallets-kit` only; no `Keypair.fromSecret` anywhere in `frontend/`. (Repo-wide key hygiene: see M4 below; testnet keys outside the frontend bundle are documented as compromised.) |
 | F2 | RPC endpoint validated as HTTPS-only | ✅ | `getRpcServer()` constructed with `{ allowHttp: false }` |
 | F3 | Network passphrase explicitly set on every transaction | ✅ | `getNetworkPassphrase()` passed to every `TransactionBuilder` |
 | F4 | XDR errors decoded gracefully — user sees readable error, not stack trace | ✅ | `parseContractError()` in `lib/soroban.ts` maps known error patterns to human messages |
@@ -75,6 +75,7 @@ Audit performed against [OWASP Top 10 for Smart Contracts](https://owasp.org/www
 | M1 | Single admin key controls IV, spread, pause | Admin key held in cold storage for production; testnet uses standard CLI keypair | Multi-sig for admin is a Phase-3 roadmap item (see README "Roadmap") |
 | M2 | Pricing engine has no IV surface (flat 80% IV) | Documented as "Phase 2: IV surface" in README | Flat IV is acceptable for MVP; reduces oracle surface area |
 | M3 | No circuit breaker on oracle price (>±X% per block) | DIA is a reputable push oracle on Stellar testnet; testnet exploits don't have economic impact | Pre-mainnet hardening item |
+| M4 | **Phase-1 wallet secrets exposed in git history** — `scripts/simulate-activity.js` (commit `9afc2b1`) committed the 6 secret seeds for the Phase-1 community-feedback wallets (`GCSM…LGSW`, `GBMN…PGP4`, `GCZL…V2C2`, `GCHP…HTL4`, `GCVE…H5PN`, `GAVR…PT4L`) inline | Secrets moved to gitignored `scripts/.phase1-secrets.json` in the current commit; security checklist updated; **these specific seeds MUST be treated as permanently compromised and rotated before any mainnet redeploy** | Testnet-only at present; no real funds at risk. Rotating would invalidate the on-chain history these wallets carry for the feedback xlsx, which is why the keys were not rotated for the testnet submission |
 
 ## Open items for next phase
 

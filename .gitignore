@@ -52,3 +52,4 @@ yarn-debug.log*
 yarn-error.log*
 scripts/.onboarded-secrets.json
 scripts/.sponsor-key.json
+scripts/.phase1-secrets.json

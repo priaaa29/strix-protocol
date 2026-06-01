@@ -43,14 +43,29 @@ const OPTION_MARKET_ID = process.env.NEXT_PUBLIC_OPTION_MARKET_ID || '';
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://soroban-testnet.stellar.org';
 const ACTIVE_NETWORK = (process.env.NEXT_PUBLIC_NETWORK as string) || 'testnet';
 const PASSPHRASE = ACTIVE_NETWORK === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
+const HORIZON_URL = ACTIVE_NETWORK === 'mainnet'
+  ? 'https://horizon.stellar.org'
+  : 'https://horizon-testnet.stellar.org';
 
 // Allowed contract methods that the sponsor will pay for
 const ALLOWED_METHODS = new Set(['buy_call', 'buy_put']);
 
-// Rate limit: 5 sponsored txs per source wallet per 24h
+// Per-wallet rate limit: 5 sponsored txs per source wallet per 24h.
+// Note: trivially bypassable by minting fresh keypairs — the per-wallet
+// limit is a UX guardrail, not a security control. The global guard below
+// (and the on-chain sponsor balance check) are what actually bound sponsor
+// spend.
 const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
-const sponsorshipLog = new Map<string, number[]>(); // address → array of unix ms timestamps
+const sponsorshipLog = new Map<string, number[]>();
+
+// Global daily ceiling: no more than N sponsored txs/day across the entire
+// service. Defends against the sybil mint-fresh-keypair attack the per-wallet
+// limit can't see. In-memory and per-Vercel-region (cold-starts reset it) —
+// for production this should be backed by a shared KV (Upstash / Vercel KV).
+// Today the on-chain sponsor balance check is the hard backstop.
+const GLOBAL_DAILY_CAP = 500;
+let globalTimestamps: number[] = [];
 
 // Minimum sponsor XLM balance below which we stop sponsoring (1000 XLM headroom)
 const MIN_SPONSOR_BALANCE_XLM = 1000;
@@ -71,10 +86,51 @@ function isUnderRateLimit(address: string): { ok: boolean; remaining: number } {
   };
 }
 
+function isUnderGlobalCap(): boolean {
+  const now = Date.now();
+  globalTimestamps = globalTimestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  return globalTimestamps.length < GLOBAL_DAILY_CAP;
+}
+
 function recordSponsorship(address: string) {
   const history = sponsorshipLog.get(address) || [];
-  history.push(Date.now());
+  const now = Date.now();
+  history.push(now);
   sponsorshipLog.set(address, history);
+  globalTimestamps.push(now);
+}
+
+function refundSponsorship(address: string) {
+  // Pop the most recent entry from both counters — used when submission fails
+  // before the sponsor's XLM was actually spent.
+  const history = sponsorshipLog.get(address) || [];
+  history.pop();
+  sponsorshipLog.set(address, history);
+  globalTimestamps.pop();
+}
+
+/**
+ * Fetch the sponsor account's native XLM balance from Horizon. Soroban RPC
+ * `getAccount` returns an AccountEntry but no balance, so we use Horizon for
+ * this. Returns -1 on any error so the caller can fail closed.
+ */
+async function fetchNativeXlmBalance(publicKey: string): Promise<number> {
+  try {
+    const res = await fetch(`${HORIZON_URL}/accounts/${publicKey}`, {
+      // Short timeout; sponsor service must stay responsive.
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return -1;
+    const data = (await res.json()) as {
+      balances?: Array<{ asset_type: string; balance: string }>;
+    };
+    const native = data.balances?.find((b) => b.asset_type === 'native');
+    if (!native) return -1;
+    const parsed = parseFloat(native.balance);
+    return Number.isFinite(parsed) ? parsed : -1;
+  } catch {
+    return -1;
+  }
 }
 
 /**
@@ -119,19 +175,6 @@ function validateInnerTx(tx: Transaction): { ok: true; method: string } | { ok: 
   }
 
   return { ok: true, method: methodName };
-}
-
-async function checkSponsorBalance(server: rpc.Server, sponsorPub: string): Promise<number> {
-  try {
-    const account = await server.getAccount(sponsorPub);
-    // account.balances is on Horizon Accounts API, not Soroban; use balance() via Horizon
-    // For Soroban we just read the AccountEntry via the RPC — assume sufficient if call succeeds.
-    // For a true balance check we'd hit Horizon; for now, return a placeholder.
-    void account;
-    return Number.POSITIVE_INFINITY;
-  } catch {
-    return 0;
-  }
 }
 
 export async function POST(req: NextRequest) {
@@ -182,14 +225,25 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Build fee-bump envelope
-  const sponsorKp = Keypair.fromSecret(SPONSOR_SECRET);
-  const server = new rpc.Server(RPC_URL, { allowHttp: false });
+  if (!isUnderGlobalCap()) {
+    return err(429, 'Sponsorship quota reached for today — retry tomorrow or pay your own gas', {
+      retry_after_seconds: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000),
+    });
+  }
 
-  const balanceXlm = await checkSponsorBalance(server, sponsorKp.publicKey());
+  // Hard backstop: read the sponsor account's actual XLM balance from Horizon
+  // and fail closed (treat -1 / fetch error as below threshold). Soroban RPC's
+  // getAccount does NOT return XLM balance; we must hit Horizon for this.
+  const sponsorKp = Keypair.fromSecret(SPONSOR_SECRET);
+  const balanceXlm = await fetchNativeXlmBalance(sponsorKp.publicKey());
+  if (balanceXlm < 0) {
+    return err(503, 'Sponsor balance unavailable — please retry shortly or pay your own gas');
+  }
   if (balanceXlm < MIN_SPONSOR_BALANCE_XLM) {
     return err(503, 'Sponsorship pool depleted — please retry later or pay your own gas');
   }
+
+  const server = new rpc.Server(RPC_URL, { allowHttp: false });
 
   let feeBump: FeeBumpTransaction;
   try {
@@ -206,24 +260,27 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Submit
+  // Record optimistically before submit — counters are atomic per-process,
+  // so doing it after submit risks racing concurrent calls past the cap.
+  // We refund both counters if the network rejects the tx below.
+  recordSponsorship(userAddress);
+
   let sendResult: rpc.Api.SendTransactionResponse;
   try {
     sendResult = await server.sendTransaction(feeBump);
   } catch (e) {
+    refundSponsorship(userAddress);
     return err(502, 'Failed to submit to RPC', {
       detail: e instanceof Error ? e.message : String(e),
     });
   }
 
   if (sendResult.status === 'ERROR') {
+    refundSponsorship(userAddress);
     return err(400, 'Network rejected the sponsored transaction', {
       sendResult,
     });
   }
-
-  // Record sponsorship for rate limiting
-  recordSponsorship(userAddress);
 
   return NextResponse.json({
     status: 'submitted',
@@ -235,6 +292,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
+  const sponsorPub = SPONSOR_SECRET ? Keypair.fromSecret(SPONSOR_SECRET).publicKey() : null;
+  const balance = sponsorPub ? await fetchNativeXlmBalance(sponsorPub) : -1;
+  // Filter expired before reporting count
+  const now = Date.now();
+  const liveGlobal = globalTimestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS).length;
   return NextResponse.json({
     service: 'strix-sponsor',
     network: ACTIVE_NETWORK,
@@ -242,7 +304,11 @@ export async function GET() {
     rate_limit: {
       max_per_wallet: RATE_LIMIT_MAX,
       window_hours: RATE_LIMIT_WINDOW_MS / (60 * 60 * 1000),
+      global_daily_cap: GLOBAL_DAILY_CAP,
+      global_used_today: liveGlobal,
     },
-    sponsor_pubkey: SPONSOR_SECRET ? Keypair.fromSecret(SPONSOR_SECRET).publicKey() : null,
+    sponsor_pubkey: sponsorPub,
+    sponsor_balance_xlm: balance >= 0 ? balance : null,
+    sponsor_threshold_xlm: MIN_SPONSOR_BALANCE_XLM,
   });
 }

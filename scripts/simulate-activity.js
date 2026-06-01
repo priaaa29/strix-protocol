@@ -26,38 +26,22 @@ const NETWORK_PASSPHRASE = Networks.TESTNET;
 // Admin (receives the XLM drain — just concentration for varied balances)
 const ADMIN_PUBLIC = 'GC74PVJTC4FQRYFAJVFAPUXPBKGBAJIUN7KO7FMCWXMV5X3EWWP7KM6O';
 
-const ACCOUNTS = [
-  {
-    name:   'Rohan (Options Trader)',
-    keypair: Keypair.fromSecret('SANC3YXMYZHGUSYAIYTTHJ7NP2JGIMCMCM6U4LWTL6Y3MWWIQ6O5LVT2'),
-    drain:  '1847',   // active trader — lots of gas/activity
-  },
-  {
-    name:   'Ananya (Liquidity Provider)',
-    keypair: Keypair.fromSecret('SBJ3NZ4EE6JARJ4SQAQOPCDU4LZBLJ2IBJ5QZNSC7BRSSXTUW5T6JWFC'),
-    drain:  '412',    // moderate LP, not much XLM movement
-  },
-  {
-    name:   'Karan (Market Maker)',
-    keypair: Keypair.fromSecret('SCQHOZWY2WXQPZE4Q25QW6LNCL4XLWPIB66A7UDVO6YGUY7OOJN6NGX4'),
-    drain:  '2156',   // heavy market making — most active
-  },
-  {
-    name:   'Dev (Arbitrageur)',
-    keypair: Keypair.fromSecret('SBVPZ752FKBVGVSMWGOL2BZHVINZEEJDJ4QOHDFZCVK4UAA2EJFGS2HI'),
-    drain:  '891',    // occasional arb runs
-  },
-  {
-    name:   'Shreya (Hedger)',
-    keypair: Keypair.fromSecret('SDIIYYS45HA2P3JV5CE462FW6AUFAVGCLYBTH4SMR7AP75V2UJR5IJPT'),
-    drain:  '1324',   // regular hedging positions
-  },
-  {
-    name:   'Rahul (Options Writer)',
-    keypair: Keypair.fromSecret('SBVHWJ7HHXS3FFG5PW2MMSWRJAVLAWCPPNEXS52EHLP4JM7E6KMXJ5CF'),
-    drain:  '673',    // writer, mostly receives premium
-  },
-];
+// Phase-1 secrets are loaded from scripts/.phase1-secrets.json (gitignored).
+// Historical note: these secrets were committed inline in this file in commit
+// 9afc2b1 and are therefore exposed in git history. They protect testnet-only
+// funds and are documented in docs/security-checklist.md as compromised.
+// MUST rotate to fresh keys before any mainnet deployment.
+const fs = require('fs');
+const SECRETS_PATH = path.join(__dirname, '.phase1-secrets.json');
+if (!fs.existsSync(SECRETS_PATH)) {
+  console.error(`Missing ${SECRETS_PATH}. See docs/security-checklist.md for setup.`);
+  process.exit(1);
+}
+const ACCOUNTS = JSON.parse(fs.readFileSync(SECRETS_PATH, 'utf8')).accounts.map((a) => ({
+  name:    `${a.name} (${a.role})`,
+  keypair: Keypair.fromSecret(a.secret),
+  drain:   a.drain,
+}));
 
 function get(url) {
   return new Promise((resolve, reject) => {
