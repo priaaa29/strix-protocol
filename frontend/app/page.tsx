@@ -212,9 +212,9 @@ export default function Dashboard() {
               <div className="mb-5 w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
                 <IconSettlement className="w-[18px] h-[18px] text-white/50" />
               </div>
-              <h3 className="font-display text-[15px] font-bold text-white mb-2 tracking-tight">Auto Settlement</h3>
+              <h3 className="font-display text-[15px] font-bold text-white mb-2 tracking-tight">Permissionless Settlement</h3>
               <p className="text-[12px] text-white/32 leading-relaxed font-sans">
-                ITM options settle automatically on-chain. USDC payouts hit your wallet without lifting a finger.
+                Any wallet can settle an expired epoch. ITM holders claim their USDC payout with a single signed tx.
               </p>
             </div>
           </Tilt>
@@ -327,7 +327,7 @@ export default function Dashboard() {
           {[
             { n: '01', title: 'LPs Fund the Vault',   body: 'Deposit USDC to underwrite options. Earn premium income when options expire worthless.' },
             { n: '02', title: 'Traders Buy Options',  body: 'Buy European calls or puts at any listed strike. Black-Scholes pricing with live oracle data.' },
-            { n: '03', title: 'Friday Settlement',    body: 'Options settle at 16:00 UTC each Friday. ITM holders claim USDC payouts automatically.' },
+            { n: '03', title: 'Friday Settlement',    body: 'Options settle at 16:00 UTC each Friday. Any wallet can settle the epoch; ITM holders claim in one click.' },
           ].map(step => (
             <Tilt key={step.n} strength={5}>
               <div className="glass-card px-6 py-6 h-full">

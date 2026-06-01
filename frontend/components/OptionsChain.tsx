@@ -35,10 +35,11 @@ export function OptionsChain({ walletAddress }: OptionsChainProps) {
     buyer: string,
     strike: bigint,
     amount: number,
-    sponsored = false
+    sponsored = false,
+    onProgress?: (result: TxResult) => void
   ): Promise<TxResult> => {
-    if (modal?.optionType === 'Call') return buyCallOption(buyer, strike, amount, sponsored);
-    return buyPutOption(buyer, strike, amount, sponsored);
+    if (modal?.optionType === 'Call') return buyCallOption(buyer, strike, amount, sponsored, onProgress);
+    return buyPutOption(buyer, strike, amount, sponsored, onProgress);
   };
 
   const now = Math.floor(Date.now() / 1000);

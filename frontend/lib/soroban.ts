@@ -80,17 +80,53 @@ export async function readContract(
   return scValToNative(simResult.result.retval);
 }
 
+/** Per-step status callback used by buildAndSubmit* to drive the UI's TransactionStatus. */
+export type TxProgress = (next: TxResult) => void;
+
 /**
- * Build a transaction, simulate, then submit via Freighter.
- * Returns the transaction hash on success.
+ * Poll Soroban RPC for tx finality. Returns confirmed/failed; never throws.
+ * Tries both the supplied hash and (when different) the inner hash — fee-bump
+ * envelopes can sometimes only be findable by inner hash on Soroban RPC.
+ */
+async function pollForConfirmation(
+  server: rpc.Server,
+  hash: string,
+  innerHash?: string
+): Promise<TxResult> {
+  for (let attempts = 0; attempts < 30; attempts++) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const candidates = innerHash && innerHash !== hash ? [hash, innerHash] : [hash];
+    for (const h of candidates) {
+      try {
+        const status = await server.getTransaction(h);
+        if (status.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+          return { hash, status: 'confirmed' };
+        }
+        if (status.status === rpc.Api.GetTransactionStatus.FAILED) {
+          return { hash, status: 'failed', error: 'Transaction execution failed on-chain' };
+        }
+      } catch {
+        // transient RPC error — keep polling
+      }
+    }
+  }
+  return { hash, status: 'failed', error: 'Transaction confirmation timeout' };
+}
+
+/**
+ * Build a transaction, simulate, then submit via the user's wallet.
+ * Calls `onProgress` with intermediate states so the UI can show
+ * "Waiting for signature…" → "Confirming on-chain…" → final.
  */
 export async function buildAndSubmitTx(
   contractId: string,
   method: string,
   args: xdr.ScVal[],
-  sourceAddress: string
+  sourceAddress: string,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   const server = getRpcServer();
+  onProgress?.({ hash: '', status: 'pending' });
 
   try {
     const account = await server.getAccount(sourceAddress);
@@ -104,9 +140,7 @@ export async function buildAndSubmitTx(
       .setTimeout(30)
       .build();
 
-    // Simulate first to get resource usage + footprint
     const simResult = await server.simulateTransaction(tx);
-
     if (rpc.Api.isSimulationError(simResult)) {
       return {
         hash: '',
@@ -115,11 +149,8 @@ export async function buildAndSubmitTx(
       };
     }
 
-    // Assemble with simulation results
     const assembled = rpc.assembleTransaction(tx, simResult).build();
 
-    // Sign via whichever wallet the user connected (Freighter, xBull, Lobstr, etc.)
-    // Import from /sdk to share the same static instance that useWallet initializes.
     const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit/sdk');
     const { signedTxXdr: signedXdr } = await StellarWalletsKit.signTransaction(
       assembled.toXDR(),
@@ -129,11 +160,13 @@ export async function buildAndSubmitTx(
       }
     );
 
-    // Deserialize and submit
     const signedTx = TransactionBuilder.fromXDR(
       signedXdr,
       getNetworkPassphrase()
     ) as Transaction;
+
+    // User has signed — flip the modal to "Confirming on-chain…"
+    onProgress?.({ hash: '', status: 'confirming' });
 
     const sendResult = await server.sendTransaction(signedTx);
 
@@ -145,27 +178,7 @@ export async function buildAndSubmitTx(
       };
     }
 
-    // Poll for confirmation
-    const hash = sendResult.hash;
-    let attempts = 0;
-    while (attempts < 30) {
-      await new Promise((r) => setTimeout(r, 2000));
-      const status = await server.getTransaction(hash);
-
-      if (status.status === rpc.Api.GetTransactionStatus.SUCCESS) {
-        return { hash, status: 'confirmed' };
-      }
-      if (status.status === rpc.Api.GetTransactionStatus.FAILED) {
-        return {
-          hash,
-          status: 'failed',
-          error: 'Transaction execution failed on-chain',
-        };
-      }
-      attempts++;
-    }
-
-    return { hash, status: 'failed', error: 'Transaction confirmation timeout' };
+    return pollForConfirmation(server, sendResult.hash);
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err);
     return { hash: '', status: 'failed', error: parseContractError(error) };
@@ -185,9 +198,11 @@ export async function buildAndSubmitSponsoredTx(
   contractId: string,
   method: string,
   args: xdr.ScVal[],
-  sourceAddress: string
+  sourceAddress: string,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   const server = getRpcServer();
+  onProgress?.({ hash: '', status: 'pending' });
 
   try {
     const account = await server.getAccount(sourceAddress);
@@ -212,7 +227,14 @@ export async function buildAndSubmitSponsoredTx(
       { networkPassphrase: getNetworkPassphrase(), address: sourceAddress }
     );
 
-    // Submit to sponsor endpoint instead of the network directly
+    // Capture inner hash before the sponsor wraps it — fee-bump txs on Soroban
+    // can sometimes only be discoverable on the network by inner hash.
+    const innerTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase()) as Transaction;
+    const innerHash = innerTx.hash().toString('hex');
+
+    // User has signed — flip the modal to "Confirming on-chain…"
+    onProgress?.({ hash: '', status: 'confirming' });
+
     const sponsorRes = await fetch('/api/sponsor', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -222,27 +244,13 @@ export async function buildAndSubmitSponsoredTx(
     const sponsorJson = await sponsorRes.json().catch(() => ({}));
     if (!sponsorRes.ok || !sponsorJson.hash) {
       return {
-        hash: '',
+        hash: innerHash,
         status: 'failed',
         error: sponsorJson.error || `Sponsor service returned ${sponsorRes.status}`,
       };
     }
 
-    // Poll for confirmation — same logic as buildAndSubmitTx
-    const hash = sponsorJson.hash as string;
-    let attempts = 0;
-    while (attempts < 30) {
-      await new Promise((r) => setTimeout(r, 2000));
-      const status = await server.getTransaction(hash);
-      if (status.status === rpc.Api.GetTransactionStatus.SUCCESS) {
-        return { hash, status: 'confirmed' };
-      }
-      if (status.status === rpc.Api.GetTransactionStatus.FAILED) {
-        return { hash, status: 'failed', error: 'Transaction execution failed on-chain' };
-      }
-      attempts++;
-    }
-    return { hash, status: 'failed', error: 'Transaction confirmation timeout' };
+    return pollForConfirmation(server, sponsorJson.hash as string, innerHash);
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err);
     return { hash: '', status: 'failed', error: parseContractError(error) };
@@ -254,7 +262,8 @@ export async function buyCallSponsored(
   buyer: string,
   strike: bigint,
   expiry: number,
-  amount: number
+  amount: number,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   return buildAndSubmitSponsoredTx(
     CONTRACT_IDS.optionMarket,
@@ -265,7 +274,8 @@ export async function buyCallSponsored(
       nativeToScVal(expiry, { type: 'u64' }),
       nativeToScVal(amount, { type: 'u64' }),
     ],
-    buyer
+    buyer,
+    onProgress
   );
 }
 
@@ -273,7 +283,8 @@ export async function buyPutSponsored(
   buyer: string,
   strike: bigint,
   expiry: number,
-  amount: number
+  amount: number,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   return buildAndSubmitSponsoredTx(
     CONTRACT_IDS.optionMarket,
@@ -284,7 +295,8 @@ export async function buyPutSponsored(
       nativeToScVal(expiry, { type: 'u64' }),
       nativeToScVal(amount, { type: 'u64' }),
     ],
-    buyer
+    buyer,
+    onProgress
   );
 }
 
@@ -377,12 +389,8 @@ export async function getUserPositions(address: string): Promise<Position[]> {
     new Address(address).toScVal(),
   ])) as Array<bigint | number>;
 
-  const positions: Position[] = [];
-  for (const id of ids) {
-    const pos = await getPosition(Number(id));
-    positions.push(pos);
-  }
-  return positions;
+  // Parallel simulation — same pattern as fetchLivePremiums.
+  return Promise.all(ids.map((id) => getPosition(Number(id))));
 }
 
 /** Fetch a single position by ID. */
@@ -471,23 +479,25 @@ export async function getSettlement(expiry: number): Promise<SettlementInfo> {
 /** Deposit USDC to vault. */
 export async function depositToVault(
   address: string,
-  amount: bigint
+  amount: bigint,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   return buildAndSubmitTx(CONTRACT_IDS.vault, 'deposit', [
     new Address(address).toScVal(),
     nativeToScVal(amount, { type: 'i128' }),
-  ], address);
+  ], address, onProgress);
 }
 
 /** Withdraw from vault. */
 export async function withdrawFromVault(
   address: string,
-  shares: bigint
+  shares: bigint,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   return buildAndSubmitTx(CONTRACT_IDS.vault, 'withdraw', [
     new Address(address).toScVal(),
     nativeToScVal(shares, { type: 'i128' }),
-  ], address);
+  ], address, onProgress);
 }
 
 /** Buy a call option. */
@@ -495,14 +505,15 @@ export async function buyCall(
   buyer: string,
   strike: bigint,
   expiry: number,
-  amount: number
+  amount: number,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   return buildAndSubmitTx(CONTRACT_IDS.optionMarket, 'buy_call', [
     new Address(buyer).toScVal(),
     nativeToScVal(strike, { type: 'i128' }),
     nativeToScVal(expiry, { type: 'u64' }),
     nativeToScVal(amount, { type: 'u64' }),
-  ], buyer);
+  ], buyer, onProgress);
 }
 
 /** Buy a put option. */
@@ -510,36 +521,39 @@ export async function buyPut(
   buyer: string,
   strike: bigint,
   expiry: number,
-  amount: number
+  amount: number,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   return buildAndSubmitTx(CONTRACT_IDS.optionMarket, 'buy_put', [
     new Address(buyer).toScVal(),
     nativeToScVal(strike, { type: 'i128' }),
     nativeToScVal(expiry, { type: 'u64' }),
     nativeToScVal(amount, { type: 'u64' }),
-  ], buyer);
+  ], buyer, onProgress);
 }
 
 /** Settle an expiry. */
 export async function settleExpiry(
   caller: string,
-  expiry: number
+  expiry: number,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   return buildAndSubmitTx(CONTRACT_IDS.optionMarket, 'settle', [
     new Address(caller).toScVal(),
     nativeToScVal(expiry, { type: 'u64' }),
-  ], caller);
+  ], caller, onProgress);
 }
 
 /** Claim an ITM payout. */
 export async function claimPosition(
   owner: string,
-  positionId: number
+  positionId: number,
+  onProgress?: TxProgress
 ): Promise<TxResult> {
   return buildAndSubmitTx(CONTRACT_IDS.optionMarket, 'claim', [
     new Address(owner).toScVal(),
     nativeToScVal(positionId, { type: 'u64' }),
-  ], owner);
+  ], owner, onProgress);
 }
 
 // ── Error Parsing ──────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import {
   buyPut,
   buyCallSponsored,
   buyPutSponsored,
+  type TxProgress,
 } from '@/lib/soroban';
 import { fetchXlmPrice } from '@/lib/oracle';
 import type { StrikeInfo, TxResult } from '@/lib/types';
@@ -63,10 +64,16 @@ export function useOptions() {
   }, [refresh]);
 
   const buyCallOption = useCallback(
-    async (buyer: string, strike: bigint, amount: number, sponsored = false): Promise<TxResult> => {
+    async (
+      buyer: string,
+      strike: bigint,
+      amount: number,
+      sponsored = false,
+      onProgress?: TxProgress
+    ): Promise<TxResult> => {
       const result = sponsored
-        ? await buyCallSponsored(buyer, strike, expiry, amount)
-        : await buyCall(buyer, strike, expiry, amount);
+        ? await buyCallSponsored(buyer, strike, expiry, amount, onProgress)
+        : await buyCall(buyer, strike, expiry, amount, onProgress);
       if (result.status === 'confirmed') await refresh();
       return result;
     },
@@ -74,10 +81,16 @@ export function useOptions() {
   );
 
   const buyPutOption = useCallback(
-    async (buyer: string, strike: bigint, amount: number, sponsored = false): Promise<TxResult> => {
+    async (
+      buyer: string,
+      strike: bigint,
+      amount: number,
+      sponsored = false,
+      onProgress?: TxProgress
+    ): Promise<TxResult> => {
       const result = sponsored
-        ? await buyPutSponsored(buyer, strike, expiry, amount)
-        : await buyPut(buyer, strike, expiry, amount);
+        ? await buyPutSponsored(buyer, strike, expiry, amount, onProgress)
+        : await buyPut(buyer, strike, expiry, amount, onProgress);
       if (result.status === 'confirmed') await refresh();
       return result;
     },
@@ -85,8 +98,8 @@ export function useOptions() {
   );
 
   const settle = useCallback(
-    async (caller: string): Promise<TxResult> => {
-      const result = await settleExpiry(caller, expiry);
+    async (caller: string, onProgress?: TxProgress): Promise<TxResult> => {
+      const result = await settleExpiry(caller, expiry, onProgress);
       if (result.status === 'confirmed') await refresh();
       return result;
     },

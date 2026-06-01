@@ -17,7 +17,13 @@ interface BuyOptionModalProps {
   expiry: number;
   optionType: 'Call' | 'Put';
   walletAddress: string | null;
-  onBuy: (buyer: string, strike: bigint, amount: number, sponsored?: boolean) => Promise<TxResult>;
+  onBuy: (
+    buyer: string,
+    strike: bigint,
+    amount: number,
+    sponsored?: boolean,
+    onProgress?: (next: TxResult) => void,
+  ) => Promise<TxResult>;
 }
 
 export function BuyOptionModal({
@@ -45,7 +51,7 @@ export function BuyOptionModal({
     if (!walletAddress) return;
     setSubmitting(true);
     setTxResult({ hash: '', status: 'pending' });
-    const result = await onBuy(walletAddress, strike, amountNum, sponsored);
+    const result = await onBuy(walletAddress, strike, amountNum, sponsored, (next) => setTxResult(next));
     setTxResult(result);
     setSubmitting(false);
     if (result.status === 'confirmed') setTimeout(onClose, 2000);

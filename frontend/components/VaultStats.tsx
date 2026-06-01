@@ -15,8 +15,6 @@ export function VaultStats({ walletAddress }: VaultStatsProps) {
       ? Number(vaultInfo.locked * 10000n / vaultInfo.tvl) / 100
       : 0;
 
-  const estimatedApy = utilizationRate * 0.8 * 52;
-
   return (
     <div className="space-y-4">
 
@@ -39,9 +37,9 @@ export function VaultStats({ walletAddress }: VaultStatsProps) {
             sub:   'unlocked capital',
           },
           {
-            label: 'Est. APY',
-            value: vaultInfo ? `~${estimatedApy.toFixed(1)}%` : null,
-            sub:   'from premiums',
+            label: 'Total Shares',
+            value: vaultInfo ? (Number(vaultInfo.totalShares) / 1e7).toLocaleString(undefined, { maximumFractionDigits: 2 }) : null,
+            sub:   'outstanding',
           },
         ].map((stat, i) => (
           <div

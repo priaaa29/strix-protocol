@@ -26,11 +26,17 @@ export function VaultWithdraw({ walletAddress }: VaultWithdrawProps) {
     usdcPreview = (sharesBigint * vaultInfo.tvl) / vaultInfo.totalShares;
   }
 
+  // Max withdrawable in shares:
+  //   - vault can release at most `available` USDC of unlocked capital
+  //   - which equals `available * totalShares / tvl` shares
+  //   - and the user can't withdraw more than they own
   const userShares = lpInfo?.shares ?? 0n;
-  const availableToWithdraw =
-    vaultInfo && vaultInfo.totalShares > 0n
-      ? (userShares * vaultInfo.available) / vaultInfo.tvl
+  const availableInShares =
+    vaultInfo && vaultInfo.tvl > 0n
+      ? (vaultInfo.available * vaultInfo.totalShares) / vaultInfo.tvl
       : 0n;
+  const availableToWithdraw =
+    userShares < availableInShares ? userShares : availableInShares;
 
   const wouldExceedAvailable = usdcPreview > (vaultInfo?.available ?? 0n);
 
