@@ -1,12 +1,14 @@
 // Settlement Keeper — watches for expired, unsettled epochs and triggers settlement.
 //
-// After each Friday 16:00 UTC expiry, someone must call `settle(expiry)` on the
-// OptionMarket contract. This keeper runs every 5 minutes, checks if any tracked
-// expiry has passed and is not yet settled, then triggers settlement via stellar CLI.
+// After each Friday EXPIRY_HOUR_UTC expiry, someone must call `settle(expiry)` on
+// the OptionMarket contract. This keeper runs every 5 minutes, checks if any
+// tracked expiry has passed and is not yet settled, then triggers settlement via
+// stellar CLI.
 
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { logger } from './logger';
+import { EXPIRY_HOUR_UTC } from './expiry';
 
 const execFileAsync = promisify(execFile);
 
@@ -18,29 +20,38 @@ const STELLAR_SOURCE   = process.env.ADMIN_SECRET_KEY || process.env.STELLAR_KEY
 const CHECK_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
 
 let keeperTimer: ReturnType<typeof setInterval> | null = null;
+let tickRunning = false; // re-entrancy guard for overlapping intervals
 
-// Returns all Friday 16:00 UTC timestamps for the past 30 days + next 30 days.
-// The keeper only tries to settle expiries that have passed.
+// Returns all Friday EXPIRY_HOUR_UTC timestamps within [now - 28d, now]. The
+// keeper only tries to settle expiries that have passed; the lookback bounds
+// the work each tick.
 function getCandidateExpiries(): number[] {
   const now = Math.floor(Date.now() / 1000);
   const candidates: number[] = [];
-  // Walk back 4 weeks + forward 1 week looking for Fridays at 08:00 UTC
-  const start = now - 28 * 24 * 3600;
-  const end   = now + 7  * 24 * 3600;
-  let t = start;
-  while (t <= end) {
-    const d = new Date(t * 1000);
-    if (d.getUTCDay() === 5 && d.getUTCHours() === 8 && d.getUTCMinutes() === 0) {
-      if (t < now) candidates.push(t); // only past expiries
-      t += 7 * 24 * 3600; // jump to next week
-    } else {
-      t += 60; // advance 1 minute
-    }
+  // Find the most recent Friday at EXPIRY_HOUR_UTC, then walk back week by week.
+  const today = new Date(now * 1000);
+  const dow = today.getUTCDay();
+  // Days since most recent Friday (0 if today is Friday, 1 if Sat, …)
+  const daysSinceFri = (dow - 5 + 7) % 7;
+  const mostRecentFri = new Date(today);
+  mostRecentFri.setUTCDate(today.getUTCDate() - daysSinceFri);
+  mostRecentFri.setUTCHours(EXPIRY_HOUR_UTC, 0, 0, 0);
+
+  let cursorTs = Math.floor(mostRecentFri.getTime() / 1000);
+  const earliest = now - 28 * 24 * 3600;
+  while (cursorTs >= earliest) {
+    if (cursorTs < now) candidates.push(cursorTs);
+    cursorTs -= 7 * 24 * 3600;
   }
   return candidates;
 }
 
-async function isSettled(expiry: number): Promise<boolean> {
+// Three-valued isSettled — distinguishes "definitely settled" from "definitely
+// not settled" from "unknown" (RPC error). The keeper treats UNKNOWN as
+// skip-this-tick rather than spending sponsor XLM on a redundant settle().
+type SettleState = 'SETTLED' | 'OPEN' | 'UNKNOWN';
+
+async function isSettled(expiry: number): Promise<SettleState> {
   try {
     const { stdout } = await execFileAsync('stellar', [
       'contract', 'invoke',
@@ -51,9 +62,10 @@ async function isSettled(expiry: number): Promise<boolean> {
       'is_settled',
       '--expiry', String(expiry),
     ], { timeout: 30_000 });
-    return stdout.trim() === 'true';
-  } catch {
-    return false;
+    return stdout.trim() === 'true' ? 'SETTLED' : 'OPEN';
+  } catch (err: unknown) {
+    logger.warn(`[SettlementKeeper] is_settled(${expiry}) failed: ${err instanceof Error ? err.message.slice(0, 120) : String(err)}`);
+    return 'UNKNOWN';
   }
 }
 
@@ -85,20 +97,31 @@ async function settleExpiry(expiry: number): Promise<void> {
 }
 
 async function runSettlementCheck(): Promise<void> {
-  if (!OPTION_MARKET_ID || !ADMIN_ADDR || !STELLAR_SOURCE) {
-    logger.warn('[SettlementKeeper] Missing OPTION_MARKET_ID, ADMIN_ADDRESS, or STELLAR_KEY_ALIAS — skipping');
+  if (tickRunning) {
+    logger.info('[SettlementKeeper] Previous tick still running — skipping');
     return;
   }
-
-  const candidates = getCandidateExpiries();
-  if (candidates.length === 0) return;
-
-  for (const expiry of candidates) {
-    const settled = await isSettled(expiry);
-    if (!settled) {
-      await settleExpiry(expiry);
-      await new Promise(r => setTimeout(r, 3000));
+  tickRunning = true;
+  try {
+    if (!OPTION_MARKET_ID || !ADMIN_ADDR || !STELLAR_SOURCE) {
+      logger.warn('[SettlementKeeper] Missing OPTION_MARKET_ID, ADMIN_ADDRESS, or STELLAR_KEY_ALIAS — skipping');
+      return;
     }
+
+    const candidates = getCandidateExpiries();
+    if (candidates.length === 0) return;
+
+    for (const expiry of candidates) {
+      const state = await isSettled(expiry);
+      if (state === 'OPEN') {
+        await settleExpiry(expiry);
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+      // SETTLED → skip silently. UNKNOWN → skip this tick; the next interval
+      // will retry. Avoids re-submitting settle() on transient RPC errors.
+    }
+  } finally {
+    tickRunning = false;
   }
 }
 

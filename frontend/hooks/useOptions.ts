@@ -15,17 +15,7 @@ import {
 import { fetchXlmPrice } from '@/lib/oracle';
 import type { StrikeInfo, TxResult } from '@/lib/types';
 import { PRICE_REFRESH_MS } from '@/lib/constants';
-
-// Next Friday 08:00 UTC (matches create-epoch.sh)
-function getNextFridayExpiry(): number {
-  const now = new Date();
-  const day = now.getUTCDay(); // 0=Sun, 5=Fri
-  const daysUntilFri = ((5 - day + 7) % 7) || 7;
-  const nextFri = new Date(now);
-  nextFri.setUTCDate(now.getUTCDate() + daysUntilFri);
-  nextFri.setUTCHours(8, 0, 0, 0);
-  return Math.floor(nextFri.getTime() / 1000);
-}
+import { getNextFridayExpiry } from '@/lib/expiry';
 
 export function useOptions() {
   const [strikes, setStrikes] = useState<StrikeInfo[]>([]);

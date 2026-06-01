@@ -9,18 +9,9 @@ import { fetchXlmPrice } from '@/lib/oracle';
 import { formatUsdc, formatCountdown } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { PRICE_REFRESH_MS, ACTIVE_NETWORK } from '@/lib/constants';
+import { getNextFridayExpiry as getNextFriday } from '@/lib/expiry';
 
 const IS_TESTNET = ACTIVE_NETWORK !== 'mainnet';
-
-function getNextFriday(): number {
-  const now = new Date();
-  const day = now.getUTCDay();
-  const daysUntilFri = ((5 - day + 7) % 7) || 7;
-  const fri = new Date(now);
-  fri.setUTCDate(now.getUTCDate() + daysUntilFri);
-  fri.setUTCHours(16, 0, 0, 0);
-  return Math.floor(fri.getTime() / 1000);
-}
 
 const ALL_NAV = [
   { href: '/',          label: 'Dashboard', short: 'HOME',  Icon: IconGrid,     testnetOnly: false },

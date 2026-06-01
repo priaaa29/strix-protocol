@@ -9,18 +9,9 @@ import { Tilt } from '@/components/ui/Tilt';
 import { GlowStar } from '@/components/ui/GlowStar';
 import { formatUsdcDollar, formatUsdc, formatExpiry, formatPercent } from '@/lib/utils';
 import { ACTIVE_NETWORK } from '@/lib/constants';
+import { getNextFridayExpiry as getNextFriday } from '@/lib/expiry';
 
 const NETWORK_LABEL = ACTIVE_NETWORK === 'mainnet' ? 'Mainnet' : 'Testnet';
-
-function getNextFriday(): number {
-  const now = new Date();
-  const day = now.getUTCDay();
-  const daysUntilFri = ((5 - day + 7) % 7) || 7;
-  const fri = new Date(now);
-  fri.setUTCDate(now.getUTCDate() + daysUntilFri);
-  fri.setUTCHours(16, 0, 0, 0);
-  return Math.floor(fri.getTime() / 1000);
-}
 
 type StrikeRow = { strike: bigint; callPremium: bigint; putPremium: bigint };
 

@@ -8,6 +8,7 @@ import {
 import { getOptionsChainCache, setOptionsChainCache } from '../indexer/db';
 import type { StrikeInfoCached } from '../types';
 import { logger } from '../logger';
+import { getNextFridayExpiry, getUpcomingFridays } from '../expiry';
 
 const router = Router();
 
@@ -56,16 +57,8 @@ async function fetchStrikesFromChain(expiry: number): Promise<StrikeInfoCached[]
   }
 }
 
-/** Compute the next weekly Friday expiry (Unix timestamp). */
-function nextFridayExpiry(): number {
-  const now = new Date();
-  const day = now.getUTCDay(); // 0=Sun, 5=Fri
-  const daysUntilFriday = (5 - day + 7) % 7 || 7;
-  const friday = new Date(now);
-  friday.setUTCDate(now.getUTCDate() + daysUntilFriday);
-  friday.setUTCHours(16, 0, 0, 0); // 4 PM UTC
-  return Math.floor(friday.getTime() / 1000);
-}
+// Shared expiry module — single source of truth for the Friday hour.
+const nextFridayExpiry = getNextFridayExpiry;
 
 /**
  * GET /api/options/chain?expiry=<unix_timestamp>
@@ -107,22 +100,10 @@ router.get('/chain', async (req: Request, res: Response) => {
 
 /**
  * GET /api/options/expiries
- * Returns the next 4 weekly Friday expiries.
+ * Returns the next 4 weekly Friday expiries (matching on-chain epochs).
  */
 router.get('/expiries', (_req: Request, res: Response) => {
-  const expiries: number[] = [];
-  const now = new Date();
-
-  for (let i = 0; i < 4; i++) {
-    const day = now.getUTCDay();
-    const daysUntilFriday = ((5 - day + 7) % 7 || 7) + i * 7;
-    const friday = new Date(now);
-    friday.setUTCDate(now.getUTCDate() + daysUntilFriday);
-    friday.setUTCHours(16, 0, 0, 0);
-    expiries.push(Math.floor(friday.getTime() / 1000));
-  }
-
-  res.json({ expiries });
+  res.json({ expiries: getUpcomingFridays(4) });
 });
 
 export default router;
