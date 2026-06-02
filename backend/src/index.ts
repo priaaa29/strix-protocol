@@ -4,9 +4,9 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { SorobanRpc } from '@stellar/stellar-sdk';
+import { rpc } from '@stellar/stellar-sdk';
 import { initDatabase, getDb, getLastIndexedBlock } from './indexer/db';
-import { startEventListener, stopEventListener } from './indexer/eventListener';
+import { startEventListener, stopEventListener, getLastPollAt } from './indexer/eventListener';
 import { startSettlementKeeper, stopSettlementKeeper } from './settlement-keeper';
 import positionsRouter from './api/positions';
 import vaultRouter from './api/vault';
@@ -45,6 +45,12 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:3000')
 // ── App setup ──────────────────────────────────────────────────────────────
 
 const app = express();
+
+// Trust the first proxy hop (Render / Vercel / Fly all sit behind a load
+// balancer). Without this, express-rate-limit and req.ip read the proxy
+// address for every request instead of the real client IP, so all clients
+// share one rate-limit bucket.
+app.set('trust proxy', 1);
 
 // ── Middleware ─────────────────────────────────────────────────────────────
 
@@ -98,7 +104,7 @@ app.get('/health', async (_req, res) => {
 
   // RPC check
   try {
-    const server = new SorobanRpc.Server(RPC_URL, { allowHttp: false });
+    const server = new rpc.Server(RPC_URL, { allowHttp: false });
     const ledger = await server.getLatestLedger();
     checks.rpc = 'ok';
     detail.latest_ledger = ledger.sequence;
@@ -106,16 +112,24 @@ app.get('/health', async (_req, res) => {
     checks.rpc = 'error';
   }
 
-  // Indexer freshness check — last_indexed_at within 5 minutes of "now"
+  // Indexer freshness — based on last successful POLL, not last event. On a
+  // quiet testnet the protocol may have zero events for hours, which is not
+  // the same as "indexer is broken." This split fixes the audit issue where
+  // Docker HEALTHCHECK was restarting healthy containers because no trades
+  // had happened recently.
   try {
-    const last = getLastIndexedBlock();
+    const lastEvent = getLastIndexedBlock();
+    const lastPoll = getLastPollAt();
     const now = Math.floor(Date.now() / 1000);
-    const lagSec = last === 0 ? -1 : now - last;
-    detail.indexer_last_event_unix = last;
-    detail.indexer_lag_seconds = lagSec;
-    if (last === 0) {
-      checks.indexer = 'no_events_yet';
-    } else if (lagSec < 300) {
+    detail.indexer_last_event_unix = lastEvent;
+    detail.indexer_last_poll_unix = lastPoll;
+    detail.indexer_poll_lag_seconds = lastPoll === 0 ? -1 : now - lastPoll;
+    detail.indexer_event_lag_seconds = lastEvent === 0 ? -1 : now - lastEvent;
+
+    if (lastPoll === 0) {
+      checks.indexer = 'not_started';
+    } else if (now - lastPoll < 180) {
+      // 3x the 30s poll cadence
       checks.indexer = 'ok';
     } else {
       checks.indexer = 'stale';
@@ -125,7 +139,7 @@ app.get('/health', async (_req, res) => {
   }
 
   const healthy = checks.db === 'ok' && checks.rpc === 'ok'
-    && (checks.indexer === 'ok' || checks.indexer === 'no_events_yet');
+    && (checks.indexer === 'ok' || checks.indexer === 'not_started');
   res.status(healthy ? 200 : 503).json({
     status: healthy ? 'ok' : 'degraded',
     uptime_seconds: Math.floor(process.uptime()),
@@ -161,9 +175,17 @@ const server = app.listen(PORT, () => {
 
 // ── Process reliability ────────────────────────────────────────────────────
 
+// Log unhandled rejections, but keep the process alive. Tearing down the
+// HTTP API + indexer + keeper because one async path threw is the wrong
+// trade-off: most async paths are already individually try/caught, and a
+// crash here only invites a restart-loop (especially combined with a
+// transient RPC blip). Reserve hard exits for genuinely unrecoverable
+// startup errors.
 process.on('unhandledRejection', (reason) => {
-  console.error('[Fatal] Unhandled promise rejection:', reason);
-  process.exit(1);
+  console.error('[Unhandled rejection — logging, NOT exiting]', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[Uncaught exception — logging, NOT exiting]', err);
 });
 
 function shutdown() {

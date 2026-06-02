@@ -1,7 +1,7 @@
 // Strix Protocol — /api/vault router
 
 import { Router, Request, Response } from 'express';
-import { SorobanRpc, Contract, TransactionBuilder, BASE_FEE, Networks, scValToNative } from '@stellar/stellar-sdk';
+import { rpc, Contract, TransactionBuilder, BASE_FEE, Networks, scValToNative } from '@stellar/stellar-sdk';
 import { getVaultStatsCache, setVaultStatsCache } from '../indexer/db';
 import { logger } from '../logger';
 
@@ -23,7 +23,7 @@ async function fetchVaultStatsFromChain(): Promise<{
 } | null> {
   if (!VAULT_ID) return null;
 
-  const server = new SorobanRpc.Server(RPC_URL, { allowHttp: false });
+  const server = new rpc.Server(RPC_URL, { allowHttp: false });
 
   try {
     const account = await server.getAccount(DUMMY_SOURCE);
@@ -35,7 +35,7 @@ async function fetchVaultStatsFromChain(): Promise<{
 
     const simResult = await server.simulateTransaction(tx);
 
-    if (SorobanRpc.Api.isSimulationError(simResult)) {
+    if (rpc.Api.isSimulationError(simResult)) {
       logger.warn('[Vault API] Simulation error:', simResult.error);
       return null;
     }

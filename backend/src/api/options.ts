@@ -2,7 +2,7 @@
 
 import { Router, Request, Response } from 'express';
 import {
-  SorobanRpc, Contract, TransactionBuilder, BASE_FEE, Networks,
+  rpc, Contract, TransactionBuilder, BASE_FEE, Networks,
   scValToNative, nativeToScVal,
 } from '@stellar/stellar-sdk';
 import { getOptionsChainCache, setOptionsChainCache } from '../indexer/db';
@@ -24,7 +24,7 @@ const DUMMY_SOURCE = process.env.ADMIN_ADDRESS || 'GC74PVJTC4FQRYFAJVFAPUXPBKGBA
 async function fetchStrikesFromChain(expiry: number): Promise<StrikeInfoCached[] | null> {
   if (!OPTION_MARKET_ID) return null;
 
-  const server = new SorobanRpc.Server(RPC_URL, { allowHttp: false });
+  const server = new rpc.Server(RPC_URL, { allowHttp: false });
 
   try {
     const account = await server.getAccount(DUMMY_SOURCE);
@@ -36,7 +36,7 @@ async function fetchStrikesFromChain(expiry: number): Promise<StrikeInfoCached[]
 
     const simResult = await server.simulateTransaction(tx);
 
-    if (SorobanRpc.Api.isSimulationError(simResult)) {
+    if (rpc.Api.isSimulationError(simResult)) {
       logger.warn('[Options API] Simulation error:', simResult.error);
       return null;
     }

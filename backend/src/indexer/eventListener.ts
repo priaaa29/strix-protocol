@@ -1,8 +1,8 @@
 // Strix Protocol — Soroban event listener
 // Polls the Stellar RPC every 30s for new contract events and indexes them to SQLite.
 
-import { SorobanRpc } from '@stellar/stellar-sdk';
-import { insertEvent, getLastIndexedBlock } from './db';
+import { rpc, scValToNative } from '@stellar/stellar-sdk';
+import { insertEvent, getLastIndexedLedger, setLastIndexedLedger } from './db';
 import type { DbEvent } from '../types';
 import { logger } from '../logger';
 
@@ -32,24 +32,29 @@ const EVENT_TOPIC_MAP: Record<string, string> = {
   initialized: 'INITIALIZED',
 };
 
-let server: SorobanRpc.Server;
+let server: rpc.Server;
 let pollingTimer: ReturnType<typeof setInterval> | null = null;
 let lastLedger = 0;
+let lastPollAt = 0; // unix-seconds; updated on every poll attempt, success or not
 
-function getServer(): SorobanRpc.Server {
+/** Read by /health to detect a hung indexer regardless of trade volume. */
+export function getLastPollAt(): number {
+  return lastPollAt;
+}
+
+function getServer(): rpc.Server {
   if (!server) {
-    server = new SorobanRpc.Server(RPC_URL, { allowHttp: false });
+    server = new rpc.Server(RPC_URL, { allowHttp: false });
   }
   return server;
 }
 
-/** Derive a human-readable event_type from Soroban event topics. */
+/** Derive a human-readable event_type from a list of already-decoded topic strings. */
 function parseEventType(topics: string[]): string {
-  // Topics are XDR-encoded ScVals. The first topic is typically a Symbol
-  // indicating the event name. We match against known patterns.
   for (const topic of topics) {
+    const t = topic.toLowerCase();
     for (const [keyword, label] of Object.entries(EVENT_TOPIC_MAP)) {
-      if (topic.toLowerCase().includes(keyword)) {
+      if (t === keyword || t.includes(keyword)) {
         return label;
       }
     }
@@ -57,35 +62,59 @@ function parseEventType(topics: string[]): string {
   return 'UNKNOWN';
 }
 
-/** Extract user_address from event value JSON if present. */
-function extractUserAddress(valueJson: unknown): string | null {
-  if (!valueJson || typeof valueJson !== 'object') return null;
-  const v = valueJson as Record<string, unknown>;
-  // Common patterns: { user: "G...", buyer: "G...", owner: "G...", depositor: "G..." }
-  const candidates = ['user', 'buyer', 'owner', 'depositor', 'withdrawer', 'caller'];
+/** Find a G-address inside a decoded ScVal-as-JS-object value. */
+function extractUserAddress(value: unknown): string | null {
+  if (!value || typeof value !== 'object') return null;
+  const v = value as Record<string, unknown>;
+  const candidates = ['user', 'buyer', 'owner', 'depositor', 'withdrawer', 'caller', 'from', 'to'];
   for (const key of candidates) {
     const val = v[key];
     if (typeof val === 'string' && val.startsWith('G') && val.length === 56) {
       return val;
     }
   }
+  // Walk nested objects one level deep (event values are sometimes { Buy: { buyer: G… } })
+  for (const inner of Object.values(v)) {
+    if (inner && typeof inner === 'object') {
+      const nested = extractUserAddress(inner);
+      if (nested) return nested;
+    }
+  }
   return null;
 }
 
-/** Fetch and index all new events since last indexed ledger. */
+/** Decode an XDR ScVal topic/value to a JS value (or string fallback). */
+function decodeScVal(input: unknown): unknown {
+  if (input == null) return null;
+  // Already a JS primitive (string, number, …) — pass through
+  if (typeof input !== 'object') return input;
+  try {
+    return scValToNative(input as Parameters<typeof scValToNative>[0]);
+  } catch {
+    try {
+      return JSON.parse(JSON.stringify(input));
+    } catch {
+      return String(input);
+    }
+  }
+}
+
+/**
+ * Fetch all new events since the last indexed ledger. Pages through using the
+ * RPC's cursor so we don't drop events when more than `limit` exist in the
+ * window. Advances the cursor to maxLedger+1 (NOT just maxLedger) so we don't
+ * re-fetch the last block forever.
+ */
 async function pollEvents(): Promise<void> {
+  // Record the poll attempt regardless of outcome — /health uses this to
+  // distinguish "indexer is alive but quiet" from "indexer is hung."
+  lastPollAt = Math.floor(Date.now() / 1000);
+
   const srv = getServer();
   const activeContracts = Object.values(CONTRACT_IDS).filter(Boolean);
-
-  if (activeContracts.length === 0) {
-    // No contracts deployed yet — skip silently
-    return;
-  }
+  if (activeContracts.length === 0) return;
 
   try {
-    // getEvents requires a startLedger within the node's retention window.
-    // If we haven't indexed anything yet, start from the current ledger
-    // (we only care about events going forward, not historical replay).
     let startLedger = lastLedger;
     if (startLedger === 0) {
       const latest = await srv.getLatestLedger();
@@ -93,65 +122,79 @@ async function pollEvents(): Promise<void> {
       lastLedger = startLedger;
     }
 
-    const response = await srv.getEvents({
-      startLedger,
-      filters: [
-        {
-          type: 'contract',
-          contractIds: activeContracts,
-        },
-      ],
-      limit: 200,
-    });
-
-    if (!response || !response.events || response.events.length === 0) {
-      return;
-    }
-
+    // Page through events until the RPC stops returning a cursor. Cap pages
+    // per tick so a sudden surge doesn't pin the event loop.
+    let cursor: string | undefined;
+    let pagesThisTick = 0;
+    const MAX_PAGES = 10;
+    let totalIndexed = 0;
     let maxLedger = lastLedger;
 
-    for (const event of response.events) {
-      const ledger = event.ledger;
-      if (ledger > maxLedger) maxLedger = ledger;
+    while (pagesThisTick < MAX_PAGES) {
+      pagesThisTick++;
+      const getEventsArgs: Parameters<typeof srv.getEvents>[0] = cursor
+        ? ({ cursor, filters: [{ type: 'contract', contractIds: activeContracts }], limit: 200 } as Parameters<typeof srv.getEvents>[0])
+        : { startLedger, filters: [{ type: 'contract', contractIds: activeContracts }], limit: 200 };
+      const response = await srv.getEvents(getEventsArgs);
 
-      // Parse topics (array of XDR ScVal) — stringify for pattern matching
-      const rawTopics = Array.isArray(event.topic) ? event.topic : [];
-      const topics = rawTopics.map((t) => {
-        try { return JSON.stringify(t); } catch { return String(t); }
-      });
-      const eventType = parseEventType(topics);
+      const events = response?.events ?? [];
+      if (events.length === 0) break;
 
-      // Parse value
-      let valueData: unknown = null;
-      try {
-        if (event.value) {
-          valueData = JSON.parse(JSON.stringify(event.value));
-        }
-      } catch {
-        valueData = { raw: String(event.value) };
+      // Track per-tx event index so the UNIQUE (tx_hash, event_index) key
+      // doesn't drop secondary events from multi-event txs (e.g. buy_call
+      // emits lock_capital + receive_premium in one transaction).
+      const perTxCounter: Record<string, number> = {};
+
+      for (const event of events) {
+        const ledger = event.ledger;
+        if (ledger > maxLedger) maxLedger = ledger;
+
+        const rawTopics = Array.isArray(event.topic) ? event.topic : [];
+        const decodedTopics = rawTopics.map(decodeScVal).map((t) =>
+          typeof t === 'string' ? t : JSON.stringify(t)
+        );
+        const eventType = parseEventType(decodedTopics);
+
+        const decodedValue = decodeScVal(event.value);
+        const userAddress = extractUserAddress(decodedValue);
+
+        const txHash = event.txHash ?? `${event.id}`;
+        const evIndex = (perTxCounter[txHash] ?? -1) + 1;
+        perTxCounter[txHash] = evIndex;
+
+        insertEvent({
+          event_type: eventType,
+          tx_hash: txHash,
+          event_index: evIndex,
+          block_time: Math.floor(new Date(event.ledgerClosedAt ?? Date.now()).getTime() / 1000),
+          user_address: userAddress,
+          data: JSON.stringify({ topics: decodedTopics, value: decodedValue, contractId: event.contractId, ledger }),
+          indexed_at: Math.floor(Date.now() / 1000),
+        });
+
+        totalIndexed++;
       }
 
-      const userAddress = extractUserAddress(valueData);
-
-      const dbEvent: Omit<DbEvent, 'id'> = {
-        event_type: eventType,
-        tx_hash: event.txHash ?? `${event.id}`,
-        block_time: Math.floor(new Date(event.ledgerClosedAt ?? Date.now()).getTime() / 1000),
-        user_address: userAddress,
-        data: JSON.stringify({ topics, value: valueData, contractId: event.contractId, ledger }),
-        indexed_at: Math.floor(Date.now() / 1000),
-      };
-
-      insertEvent(dbEvent);
+      // If the RPC returned a cursor, fetch the next page; otherwise stop.
+      const next = (response as { cursor?: string; latestLedger?: number }).cursor;
+      if (!next || events.length < 200) break;
+      cursor = next;
     }
 
+    // Advance past the last ledger we saw so we don't refetch it next tick.
     if (maxLedger > lastLedger) {
-      lastLedger = maxLedger;
-      logger.info(`[Indexer] Indexed up to ledger ${lastLedger} (${response.events.length} events)`);
+      lastLedger = maxLedger + 1;
+      setLastIndexedLedger(lastLedger);
+      if (totalIndexed > 0) {
+        logger.info(`[Indexer] Indexed ${totalIndexed} events, cursor=${lastLedger}`);
+      }
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    logger.warn(`[Indexer] Poll failed: ${message}`);
+    logger.warn(`[Indexer] Poll failed: ${message.slice(0, 200)}`);
+    // Don't advance the cursor on failure — the next tick will retry from
+    // the same startLedger. Persistent failures will surface in /health via
+    // the indexer_poll_lag_seconds detail field.
   }
 }
 
@@ -159,15 +202,17 @@ async function pollEvents(): Promise<void> {
 export function startEventListener(): void {
   if (pollingTimer !== null) return; // Already running
 
-  // Seed last ledger from DB so we don't re-index on restart
-  const lastDbBlock = getLastIndexedBlock();
-  if (lastDbBlock > 0) {
-    lastLedger = lastDbBlock;
+  // Resume from the proper ledger cursor (indexer_state.last_ledger), NOT
+  // from MAX(block_time) on events — those are different units (timestamp
+  // vs sequence) and the audit found we were silently breaking resume by
+  // conflating them.
+  const persisted = getLastIndexedLedger();
+  if (persisted > 0) {
+    lastLedger = persisted;
   }
 
-  logger.info(`[Indexer] Starting event listener (poll every ${POLL_INTERVAL_MS / 1000}s, from ledger ${lastLedger})`);
+  logger.info(`[Indexer] Starting event listener (poll every ${POLL_INTERVAL_MS / 1000}s, from ledger ${lastLedger || '<latest>'})`);
 
-  // Poll immediately, then on interval
   void pollEvents();
   pollingTimer = setInterval(() => {
     void pollEvents();

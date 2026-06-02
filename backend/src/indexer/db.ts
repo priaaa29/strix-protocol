@@ -24,11 +24,13 @@ export function initDatabase(): void {
     CREATE TABLE IF NOT EXISTS events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       event_type TEXT NOT NULL,
-      tx_hash TEXT NOT NULL UNIQUE,
+      tx_hash TEXT NOT NULL,
+      event_index INTEGER NOT NULL DEFAULT 0,
       block_time INTEGER NOT NULL,
       user_address TEXT,
       data TEXT NOT NULL,
-      indexed_at INTEGER NOT NULL
+      indexed_at INTEGER NOT NULL,
+      UNIQUE (tx_hash, event_index)
     );
 
     CREATE TABLE IF NOT EXISTS feedback (
@@ -56,6 +58,15 @@ export function initDatabase(): void {
       cached_at INTEGER NOT NULL
     );
 
+    -- Resume cursor for the indexer. Stores the ledger SEQUENCE we last
+    -- indexed (e.g. 5_123_456) — must NOT be conflated with block_time,
+    -- which is a unix timestamp ~1.7e9. Mixing the two breaks resume on
+    -- restart since getEvents rejects out-of-range startLedger.
+    CREATE TABLE IF NOT EXISTS indexer_state (
+      key TEXT PRIMARY KEY,
+      value INTEGER NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_address);
     CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type);
     CREATE INDEX IF NOT EXISTS idx_events_block_time ON events(block_time);
@@ -66,13 +77,13 @@ export function initDatabase(): void {
 
 // ── Event queries ──────────────────────────────────────────────────────────
 
-export function insertEvent(event: Omit<DbEvent, 'id'>): void {
+export function insertEvent(event: Omit<DbEvent, 'id'> & { event_index?: number }): void {
   const db = getDb();
   const stmt = db.prepare(`
-    INSERT OR IGNORE INTO events (event_type, tx_hash, block_time, user_address, data, indexed_at)
-    VALUES (@event_type, @tx_hash, @block_time, @user_address, @data, @indexed_at)
+    INSERT OR IGNORE INTO events (event_type, tx_hash, event_index, block_time, user_address, data, indexed_at)
+    VALUES (@event_type, @tx_hash, @event_index, @block_time, @user_address, @data, @indexed_at)
   `);
-  stmt.run(event);
+  stmt.run({ event_index: 0, ...event });
 }
 
 export function getEventsByUser(userAddress: string): DbEvent[] {
@@ -96,10 +107,36 @@ export function getRecentEvents(limit = 20): DbEvent[] {
   `).all(limit) as DbEvent[];
 }
 
+/**
+ * Returns the Unix timestamp of the most recent indexed event. Used by
+ * /health to surface event-lag, NOT by the resume cursor (see
+ * getLastIndexedLedger). Returns 0 if the events table is empty.
+ */
 export function getLastIndexedBlock(): number {
   const db = getDb();
   const row = db.prepare(`SELECT MAX(block_time) as last_time FROM events`).get() as { last_time: number | null };
   return row?.last_time ?? 0;
+}
+
+/**
+ * Resume cursor: the LAST LEDGER SEQUENCE the indexer successfully processed.
+ * Persisted in indexer_state and bumped after each successful poll. Returns 0
+ * if no rows yet — caller should fall back to "latest ledger" on first boot.
+ */
+export function getLastIndexedLedger(): number {
+  const db = getDb();
+  const row = db.prepare(`SELECT value FROM indexer_state WHERE key = 'last_ledger'`).get() as
+    | { value: number }
+    | undefined;
+  return row?.value ?? 0;
+}
+
+export function setLastIndexedLedger(ledger: number): void {
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO indexer_state (key, value) VALUES ('last_ledger', ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(ledger);
 }
 
 // ── Feedback queries ───────────────────────────────────────────────────────
