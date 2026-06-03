@@ -1002,7 +1002,7 @@
             "data": {
               "vec": [
                 {
-                  "string": "caught panic 'already initialized' from contract function 'Symbol(obj#235)'"
+                  "string": "caught panic 'already initialized' from contract function 'Symbol(obj#237)'"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"

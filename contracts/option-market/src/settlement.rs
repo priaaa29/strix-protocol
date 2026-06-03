@@ -53,14 +53,32 @@ pub fn calc_payout(position: &Position, settlement_price: i128, contract_size: u
     }
 }
 
-/// Validate that a payout does not exceed the locked collateral for a position.
+/// Cap a payout at the locked collateral for a position.
 ///
-/// Acts as a safety check to prevent vault insolvency.
-/// Returns the actual payout (capped at locked_amount if needed).
+/// Returns the effective payout AND whether the cap actually trimmed the
+/// intrinsic value. Callers should emit a CAPPED event if `was_capped` is
+/// true so holders can see on-chain why they received less than the naive
+/// (settlement_price - strike) × amount × contract_size formula implies.
+///
+/// Why the cap exists:
+///   buy_call() locks `strike × amount × contract_size / SCALE` USDC of
+///   vault collateral, which covers a price move up to 2× strike (a 100%
+///   upward move). At settlement_price > 2 × strike the intrinsic value
+///   would exceed the locked collateral, so the contract returns the
+///   locked amount and emits PAYCAP. This is an intentional, disclosed
+///   ceiling — NOT a bug — and is documented on buy_call().
+pub fn capped_payout(payout: i128, locked_amount: i128) -> (i128, bool) {
+    if payout > locked_amount {
+        (locked_amount, true)
+    } else {
+        (payout, false)
+    }
+}
+
+/// Backwards-compatibility wrapper for existing call sites. Deprecated —
+/// new code should use capped_payout to surface the was_capped flag.
 pub fn validated_payout(payout: i128, locked_amount: i128) -> i128 {
-    // Payout should never exceed locked collateral by design,
-    // but we cap for safety.
-    payout.min(locked_amount)
+    capped_payout(payout, locked_amount).0
 }
 
 #[cfg(test)]

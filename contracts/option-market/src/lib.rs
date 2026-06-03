@@ -10,7 +10,7 @@ use soroban_sdk::{
     contract, contractimpl, symbol_short, token, Address, Env, Symbol, Vec,
 };
 
-use settlement::{calc_payout, validated_payout};
+use settlement::{calc_payout, capped_payout};
 use types::{DataKey, MarketConfig, OptionType, Position, SettlementInfo, StrikeInfo};
 
 
@@ -92,12 +92,13 @@ impl OptionMarket {
         oracle: Address,
         contract_size: u64,
     ) {
+        // Strict init guard: any prior config means we're done. The previous
+        // check (`if !cfg.paused || cfg.next_position_id > 0`) allowed
+        // initialize() to be re-run while the market was paused before its
+        // first buy, which would let an attacker (or accidental rerun)
+        // overwrite admin/pricing_engine/vault/oracle wiring.
         if env.storage().instance().has(&DataKey::Config) {
-            let cfg: MarketConfig = env.storage().instance().get(&DataKey::Config).unwrap();
-            if !cfg.paused || cfg.next_position_id > 0 {
-                // Already fully initialized
-                panic!("already initialized");
-            }
+            panic!("already initialized");
         }
 
         admin.require_auth();
@@ -265,10 +266,19 @@ impl OptionMarket {
             panic!("zero premium");
         }
 
-        // Calculate collateral to lock:
-        // Max call payout = (settlement_price - strike) * amount * contract_size
-        // We cap at strike (max 100% price move) for a conservative bound.
-        // locked = amount * contract_size * strike / SCALE
+        // Collateral lock for calls.
+        //
+        // The locked amount equals `amount * contract_size * strike`,
+        // which is the call's intrinsic value at settlement_price = 2 × strike.
+        // Holders are GUARANTEED the full intrinsic up to that point; above
+        // 2 × strike the payout is CAPPED at the locked amount and the
+        // settle() flow emits a PAYCAP event so the cap is visible on-chain.
+        //
+        // This trade-off lets the protocol size its vault liquidity needs at
+        // 1× notional per call (rather than unbounded, which would require
+        // infinite TVL). The cap is disclosed in the buy UI's premium card.
+        // For OTM calls (strike > spot) the cap fires only on price moves
+        // beyond +100% of strike, which is rarely hit on weekly expiries.
         let locked = (amount as i128)
             .checked_mul(config.contract_size as i128)
             .expect("overflow in locked calc")
@@ -454,10 +464,11 @@ impl OptionMarket {
             panic!("already settled");
         }
 
-        // Get settlement price from oracle
-        // For settlement we use a longer staleness window (1 hour)
-        // since settlement happens after the fact
-        let settlement_price = Self::get_settlement_price(&env, &config.oracle);
+        // Get settlement price from oracle. Pass expiry so the helper can
+        // enforce 'price published near the expiry' rather than 'price
+        // is fresh now' — closes the audit window where a late settler
+        // could anchor to a much-later price.
+        let settlement_price = Self::get_settlement_price(&env, &config.oracle, expiry);
 
         // Get all positions for this expiry
         let position_ids: Vec<u64> = env
@@ -481,7 +492,18 @@ impl OptionMarket {
             }
 
             let payout = calc_payout(&pos, settlement_price, config.contract_size);
-            let safe_payout = validated_payout(payout, pos.locked_amount);
+            let (safe_payout, was_capped) = capped_payout(payout, pos.locked_amount);
+
+            // Surface the cap on-chain so holders can verify why their
+            // payout is less than the naive (settlement_price - strike) ×
+            // amount formula. The cap is intentional (see buy_call doc)
+            // but should never be silent.
+            if was_capped {
+                env.events().publish(
+                    (symbol_short!("PAYCAP"),),
+                    (pos_id, payout, safe_payout),
+                );
+            }
 
             // Release the locked capital and pay out if ITM
             vault.pay_settlement(
@@ -666,8 +688,20 @@ impl OptionMarket {
 
     // ─── Private Helpers ──────────────────────────────────────────────────────
 
-    /// Fetch settlement price from Reflector oracle with relaxed staleness (1 hour).
-    fn get_settlement_price(env: &Env, oracle: &Address) -> i128 {
+    /// Fetch the settlement price from the Reflector oracle.
+    ///
+    /// Settlement-time fairness: the audit flagged that the previous
+    /// implementation accepted any oracle price with a 1-hour staleness
+    /// window, which let a caller wait for a favourable moment and choose
+    /// when to settle (effectively re-rolling the strike). To fix this:
+    ///   1. The oracle price's own timestamp must be no older than 15 min
+    ///      (matches Reflector's testnet ~5 min update cadence with margin).
+    ///   2. The price's timestamp must be no more than 30 min AFTER expiry
+    ///      — i.e. the price had to be "near expiry" at the time it was
+    ///      published. A caller settling days late can no longer pick a
+    ///      drifted price.
+    /// Both checks panic with a specific message so failures are debuggable.
+    fn get_settlement_price(env: &Env, oracle: &Address, expiry: u64) -> i128 {
         let asset = OptionMarketAsset::Other(Symbol::new(env, "XLM"));
         let result: Option<OptionMarketPriceData> = env.invoke_contract(
             oracle,
@@ -678,9 +712,23 @@ impl OptionMarket {
         let price_data = result.expect("oracle: no settlement price available");
 
         let now = env.ledger().timestamp();
-        // Allow 1 hour staleness for settlement
-        if now > price_data.timestamp + 3600 {
+
+        // Freshness: price must be recent relative to now (15 min window).
+        if now > price_data.timestamp + 900 {
             panic!("oracle: settlement price too stale");
+        }
+
+        // Near-expiry constraint: the oracle's own published timestamp must
+        // be within 30 min after the expiry. Prevents a late settler from
+        // anchoring to a price published long after the option matured.
+        // Allow up to 30 min BEFORE expiry too — Reflector updates ~every
+        // 5 min, so the closest sample to expiry might be a few minutes
+        // either side.
+        if price_data.timestamp + 1800 < expiry {
+            panic!("oracle: price too far before expiry");
+        }
+        if price_data.timestamp > expiry + 1800 {
+            panic!("oracle: price too far after expiry");
         }
 
         if price_data.price <= 0 {

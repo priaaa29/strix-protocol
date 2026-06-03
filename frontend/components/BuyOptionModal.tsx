@@ -199,6 +199,27 @@ export function BuyOptionModal({
           )}
         </div>
 
+        {/* Max-payout disclosure — calls are capped at strike × amount × size
+            (i.e. settlement_price = 2 × strike). Disclose explicitly so users
+            aren't surprised if a >2× rally caps their payout. Puts are
+            inherently bounded (strike − 0) so no disclosure needed. */}
+        {isCall && (() => {
+          const maxPayout = strike * BigInt(amountNum);
+          return (
+            <div className="border border-white/[0.08] bg-white/[0.02] rounded-xl px-4 py-2.5">
+              <div className="flex items-baseline justify-between">
+                <span className="label text-white/40">Max Payout (call cap)</span>
+                <span className="font-data text-[12px] tabular text-white/65">
+                  {formatUsdcDollar(maxPayout, 4)}
+                </span>
+              </div>
+              <p className="text-[10px] text-white/25 font-sans mt-1 leading-relaxed">
+                Above settlement at 2× strike (${formatUsdc(strike * 2n, 4)}), payout is capped at the locked collateral.
+              </p>
+            </div>
+          );
+        })()}
+
         {txResult && <TransactionStatus result={txResult} />}
 
         {!walletAddress ? (

@@ -2486,7 +2486,7 @@
             "data": {
               "vec": [
                 {
-                  "string": "caught panic 'unauthorized' from contract function 'Symbol(obj#549)'"
+                  "string": "caught panic 'unauthorized' from contract function 'Symbol(obj#551)'"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5"

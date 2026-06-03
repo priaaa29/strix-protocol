@@ -2486,7 +2486,7 @@
             "data": {
               "vec": [
                 {
-                  "string": "caught panic 'epoch already exists' from contract function 'Symbol(obj#547)'"
+                  "string": "caught panic 'epoch already exists' from contract function 'Symbol(obj#549)'"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"

@@ -109,7 +109,10 @@ impl UnderwritingVault {
 
     /// Set the authorized OptionMarket contract address (admin-only).
     ///
-    /// Must be called before any capital locking occurs.
+    /// One-shot: allowed while option_market still equals the placeholder
+    /// (current contract address) AND no capital is locked. Once set, the
+    /// market address is immutable so a compromised admin can't repoint
+    /// pay_settlement at a contract they control and drain the vault.
     pub fn set_option_market(env: Env, admin: Address, option_market: Address) {
         admin.require_auth();
 
@@ -121,6 +124,16 @@ impl UnderwritingVault {
 
         if config.admin != admin {
             panic!("unauthorized");
+        }
+
+        // Set-once: only allowed while option_market still holds the
+        // placeholder set by initialize() (current_contract_address) AND
+        // no LP capital is at risk.
+        if config.option_market != env.current_contract_address() {
+            panic!("option_market already set");
+        }
+        if config.locked_capital != 0 {
+            panic!("locked capital present");
         }
 
         config.option_market = option_market.clone();

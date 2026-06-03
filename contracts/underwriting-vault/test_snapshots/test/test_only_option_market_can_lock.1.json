@@ -1612,7 +1612,7 @@
             "data": {
               "vec": [
                 {
-                  "string": "caught panic 'unauthorized: caller is not option_market' from contract function 'Symbol(obj#423)'"
+                  "string": "caught panic 'unauthorized: caller is not option_market' from contract function 'Symbol(obj#425)'"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"

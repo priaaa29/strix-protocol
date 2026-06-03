@@ -97,6 +97,13 @@ impl PricingEngine {
     ///
     /// Returns premium in 7-decimal USDC.
     pub fn calc_call_premium(env: Env, strike: i128, expiry: u64, amount: u64) -> i128 {
+        if strike <= 0 {
+            panic!("strike must be positive");
+        }
+        if amount == 0 {
+            panic!("amount must be positive");
+        }
+
         let config: PricingConfig = env
             .storage()
             .instance()
@@ -137,6 +144,13 @@ impl PricingEngine {
     ///
     /// Same semantics as `calc_call_premium` but for put options.
     pub fn calc_put_premium(env: Env, strike: i128, expiry: u64, amount: u64) -> i128 {
+        if strike <= 0 {
+            panic!("strike must be positive");
+        }
+        if amount == 0 {
+            panic!("amount must be positive");
+        }
+
         let config: PricingConfig = env
             .storage()
             .instance()

@@ -116,8 +116,15 @@ pub fn exp(x: i128) -> i128 {
         }
     }
 
-    // Multiply by 2^k (shift up)
-    let scaled = result << k; // result * 2^k
+    // Multiply by 2^k. Use checked_shl to guard against i128 overflow on
+    // large positive exponents — today every call site supplies a non-
+    // positive argument (so this path runs only inside the reciprocal
+    // branch where overflow is impossible), but checking here avoids a
+    // latent panic if a new call site ever feeds a large positive value.
+    let scaled = match result.checked_shl(k as u32) {
+        Some(v) => v,
+        None => return if neg { 0 } else { i128::MAX / SCALE },
+    };
 
     if neg {
         // e^(-ax) = SCALE^2 / (SCALE * e^ax) = SCALE / e^ax
