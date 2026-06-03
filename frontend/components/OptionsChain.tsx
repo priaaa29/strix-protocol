@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useOptions } from '@/hooks/useOptions';
 import { BuyOptionModal } from '@/components/BuyOptionModal';
 import { Button } from '@/components/ui/button';
+import { TransactionStatus } from '@/components/TransactionStatus';
 import { formatUsdc, formatExpiry, formatCountdown } from '@/lib/utils';
 import type { TxResult } from '@/lib/types';
 
@@ -26,7 +27,8 @@ export function OptionsChain({ walletAddress }: OptionsChainProps) {
   const handleSettle = async () => {
     if (!walletAddress) return;
     setSettling(true);
-    const result = await settle(walletAddress);
+    setSettleResult({ hash: '', status: 'pending' });
+    const result = await settle(walletAddress, (next) => setSettleResult(next));
     setSettleResult(result);
     setSettling(false);
   };
@@ -231,9 +233,7 @@ export function OptionsChain({ walletAddress }: OptionsChainProps) {
         </div>
       )}
 
-      {settleResult?.status === 'failed' && (
-        <p className="text-[11px] text-rust">{settleResult.error}</p>
-      )}
+      <TransactionStatus result={settleResult} />
 
       {!walletAddress && strikes.length > 0 && !settled && !isExpired && (
         <p className="text-center text-[11px] text-white/22 uppercase tracking-wider py-2 font-sans">

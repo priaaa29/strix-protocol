@@ -4,6 +4,7 @@ import { Router, Request, Response } from 'express';
 import { rpc, Contract, TransactionBuilder, BASE_FEE, Networks, scValToNative } from '@stellar/stellar-sdk';
 import { getVaultStatsCache, setVaultStatsCache } from '../indexer/db';
 import { logger } from '../logger';
+import { withRetry } from '../rpc-retry';
 
 const router = Router();
 
@@ -26,14 +27,14 @@ async function fetchVaultStatsFromChain(): Promise<{
   const server = new rpc.Server(RPC_URL, { allowHttp: false });
 
   try {
-    const account = await server.getAccount(DUMMY_SOURCE);
+    const account = await withRetry('vault:getAccount', () => server.getAccount(DUMMY_SOURCE));
     const contract = new Contract(VAULT_ID);
     const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: NETWORK_PASSPHRASE })
       .addOperation(contract.call('get_vault_info'))
       .setTimeout(30)
       .build();
 
-    const simResult = await server.simulateTransaction(tx);
+    const simResult = await withRetry('vault:simulate', () => server.simulateTransaction(tx));
 
     if (rpc.Api.isSimulationError(simResult)) {
       logger.warn('[Vault API] Simulation error:', simResult.error);

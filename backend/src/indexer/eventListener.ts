@@ -5,6 +5,7 @@ import { rpc, scValToNative } from '@stellar/stellar-sdk';
 import { insertEvent, getLastIndexedLedger, setLastIndexedLedger } from './db';
 import type { DbEvent } from '../types';
 import { logger } from '../logger';
+import { withRetry } from '../rpc-retry';
 
 const RPC_URL = process.env.RPC_URL || 'https://soroban-testnet.stellar.org';
 const POLL_INTERVAL_MS = 30_000;
@@ -117,7 +118,7 @@ async function pollEvents(): Promise<void> {
   try {
     let startLedger = lastLedger;
     if (startLedger === 0) {
-      const latest = await srv.getLatestLedger();
+      const latest = await withRetry('getLatestLedger', () => srv.getLatestLedger());
       startLedger = latest.sequence;
       lastLedger = startLedger;
     }
@@ -135,7 +136,7 @@ async function pollEvents(): Promise<void> {
       const getEventsArgs: Parameters<typeof srv.getEvents>[0] = cursor
         ? ({ cursor, filters: [{ type: 'contract', contractIds: activeContracts }], limit: 200 } as Parameters<typeof srv.getEvents>[0])
         : { startLedger, filters: [{ type: 'contract', contractIds: activeContracts }], limit: 200 };
-      const response = await srv.getEvents(getEventsArgs);
+      const response = await withRetry('getEvents', () => srv.getEvents(getEventsArgs));
 
       const events = response?.events ?? [];
       if (events.length === 0) break;

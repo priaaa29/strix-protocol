@@ -29,6 +29,31 @@ export function getRpcServer(): rpc.Server {
   return new rpc.Server(NETWORK_CONFIG.rpcUrl, { allowHttp: false });
 }
 
+// ── RPC retry helper ───────────────────────────────────────────────────────
+
+function isTransientRpcError(err: unknown): boolean {
+  if (!err) return false;
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/timeout|fetch failed|network|ECONNRESET|ENOTFOUND/i.test(msg)) return true;
+  if (/\b(429|5\d\d)\b/.test(msg)) return true;
+  return false;
+}
+
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (!isTransientRpcError(err) || i === attempts - 1) throw err;
+      const wait = Math.floor(Math.random() * Math.min(2000, 250 * 2 ** i));
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}
+
 // ── Network Passphrase ─────────────────────────────────────────────────────
 
 export function getNetworkPassphrase(): string {
@@ -67,7 +92,7 @@ export async function readContract(
     .setTimeout(30)
     .build();
 
-  const simResult = await server.simulateTransaction(tx);
+  const simResult = await withRetry(() => server.simulateTransaction(tx));
 
   if (rpc.Api.isSimulationError(simResult)) {
     throw new Error(`Contract call failed: ${simResult.error}`);

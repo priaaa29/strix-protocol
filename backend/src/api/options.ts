@@ -9,6 +9,7 @@ import { getOptionsChainCache, setOptionsChainCache } from '../indexer/db';
 import type { StrikeInfoCached } from '../types';
 import { logger } from '../logger';
 import { getNextFridayExpiry, getUpcomingFridays } from '../expiry';
+import { withRetry } from '../rpc-retry';
 
 const router = Router();
 
@@ -27,14 +28,14 @@ async function fetchStrikesFromChain(expiry: number): Promise<StrikeInfoCached[]
   const server = new rpc.Server(RPC_URL, { allowHttp: false });
 
   try {
-    const account = await server.getAccount(DUMMY_SOURCE);
+    const account = await withRetry('options:getAccount', () => server.getAccount(DUMMY_SOURCE));
     const contract = new Contract(OPTION_MARKET_ID);
     const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: NETWORK_PASSPHRASE })
       .addOperation(contract.call('get_strikes', nativeToScVal(expiry, { type: 'u64' })))
       .setTimeout(30)
       .build();
 
-    const simResult = await server.simulateTransaction(tx);
+    const simResult = await withRetry('options:simulate', () => server.simulateTransaction(tx));
 
     if (rpc.Api.isSimulationError(simResult)) {
       logger.warn('[Options API] Simulation error:', simResult.error);
