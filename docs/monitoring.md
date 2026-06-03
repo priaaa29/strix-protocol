@@ -64,7 +64,7 @@ The `/metrics` page in the Next.js app pulls live state from the deployed contra
 
 - TVL, locked, available, share price
 - Total positions opened (`MarketConfig.next_position_id`)
-- Current XLM spot from DIA oracle
+- Current XLM spot from Reflector oracle
 - Market pause status
 - Deployed contract addresses with Stellar Expert links
 

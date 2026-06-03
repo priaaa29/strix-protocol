@@ -10,6 +10,7 @@ import { formatUsdc, formatCountdown } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { PRICE_REFRESH_MS, ACTIVE_NETWORK } from '@/lib/constants';
 import { getNextFridayExpiry as getNextFriday } from '@/lib/expiry';
+import { useWallet } from '@/hooks/useWallet';
 
 const IS_TESTNET = ACTIVE_NETWORK !== 'mainnet';
 
@@ -27,6 +28,7 @@ const NAV = ALL_NAV.filter(n => !n.testnetOnly || IS_TESTNET);
 export function Layout({ children }: { children: React.ReactNode }) {
   const pathname  = usePathname();
   const expiry    = getNextFriday();
+  const { networkMismatch } = useWallet();
 
   const [price,     setPrice]     = useState<bigint>(0n);
   const [flash,     setFlash]     = useState<'up' | 'down' | null>(null);
@@ -238,6 +240,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <WalletConnect compact />
           </div>
         </header>
+
+        {/* Network mismatch banner — shown only when the connected wallet's
+            network differs from what the app is built against (ACTIVE_NETWORK).
+            Without this, every signed tx would silently fail with a cryptic
+            'invalid network passphrase' error. */}
+        {networkMismatch && (
+          <div className="border-b border-rust/30 bg-rust/[0.08] px-4 sm:px-8 py-3">
+            <div className="max-w-5xl mx-auto flex items-center gap-3">
+              <span className="text-[14px] leading-none text-rust">⚠</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] text-rust font-sans font-semibold">
+                  Wallet is on <span className="font-mono">{networkMismatch.walletNetwork}</span>; Strix is on <span className="font-mono">{ACTIVE_NETWORK}</span>
+                </p>
+                <p className="text-[11px] text-rust/70 font-sans mt-0.5">
+                  Switch your wallet's network to {ACTIVE_NETWORK} before signing — transactions will be rejected otherwise.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Page content */}
         <main className="flex-1 min-w-0">

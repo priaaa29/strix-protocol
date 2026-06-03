@@ -39,7 +39,7 @@ Audit performed against [OWASP Top 10 for Smart Contracts](https://owasp.org/www
 | E3 | Settlement price locked at first `settle()` call — replay-safe | ✅ | `option-market/src/lib.rs:434` writes `SettlementInfo` once; re-call panics with "already settled" |
 | E4 | Vault capacity check before locking collateral | ✅ | `underwriting-vault/src/lib.rs` `lock_capital` reverts with "insufficient unlocked capital" |
 | E5 | Premium > 0 enforced (no zero-cost options) | ✅ | `option-market/src/lib.rs:226` rejects with "zero premium" |
-| E6 | DIA oracle is autonomous push oracle — no keeper dependency, no single point of failure | ✅ | Migrated off MockOracle in commit `[oracle migration]`; documented in `docs/deployment.md` |
+| E6 | Reflector oracle is autonomous push oracle — no keeper dependency, no single point of failure | ✅ | Migrated off MockOracle in commit `[oracle migration]`; documented in `docs/deployment.md` |
 
 ## Integer arithmetic
 
@@ -74,7 +74,7 @@ Audit performed against [OWASP Top 10 for Smart Contracts](https://owasp.org/www
 |---|------|------------|-----------|
 | M1 | Single admin key controls IV, spread, pause | Admin key held in cold storage for production; testnet uses standard CLI keypair | Multi-sig for admin is a Phase-3 roadmap item (see README "Roadmap") |
 | M2 | Pricing engine has no IV surface (flat 80% IV) | Documented as "Phase 2: IV surface" in README | Flat IV is acceptable for MVP; reduces oracle surface area |
-| M3 | No circuit breaker on oracle price (>±X% per block) | DIA is a reputable push oracle on Stellar testnet; testnet exploits don't have economic impact | Pre-mainnet hardening item |
+| M3 | No circuit breaker on oracle price (>±X% per block) | Reflector is a reputable push oracle on Stellar testnet; testnet exploits don't have economic impact | Pre-mainnet hardening item |
 | M4 | **Phase-1 wallet secrets exposed in git history** — `scripts/simulate-activity.js` (commit `9afc2b1`) committed the 6 secret seeds for the Phase-1 community-feedback wallets (`GCSM…LGSW`, `GBMN…PGP4`, `GCZL…V2C2`, `GCHP…HTL4`, `GCVE…H5PN`, `GAVR…PT4L`) inline | Secrets moved to gitignored `scripts/.phase1-secrets.json` in the current commit; security checklist updated; **these specific seeds MUST be treated as permanently compromised and rotated before any mainnet redeploy** | Testnet-only at present; no real funds at risk. Rotating would invalidate the on-chain history these wallets carry for the feedback xlsx, which is why the keys were not rotated for the testnet submission |
 
 ## Open items for next phase

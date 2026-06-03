@@ -414,6 +414,27 @@ export async function getPosition(positionId: number): Promise<Position> {
   };
 }
 
+/**
+ * Quote a single live premium from the PricingEngine. Same simulation pattern
+ * as fetchLivePremiums but for one specific strike/type — used by the buy
+ * modal to show users the *on-chain* price before they sign, not just the
+ * client-side Black-Scholes estimate (which can drift on far-OTM strikes).
+ */
+export async function quoteLivePremium(
+  optionType: 'Call' | 'Put',
+  strike: bigint,
+  expiry: number,
+  amount: number
+): Promise<bigint> {
+  const method = optionType === 'Call' ? 'calc_call_premium' : 'calc_put_premium';
+  const raw = await readContract(CONTRACT_IDS.pricingEngine, method, [
+    nativeToScVal(strike, { type: 'i128' }),
+    nativeToScVal(expiry, { type: 'u64' }),
+    nativeToScVal(amount, { type: 'u64' }),
+  ]).catch(() => 0);
+  return BigInt(raw as bigint | number);
+}
+
 /** Aggregate protocol-level metrics for the /metrics dashboard. */
 export interface ProtocolMetrics {
   tvl: bigint;

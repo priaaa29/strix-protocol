@@ -101,7 +101,7 @@ export default function MetricsPage() {
           <ContractRow label="OptionMarket"  addr={CONTRACT_IDS.optionMarket} />
           <ContractRow label="UnderwritingVault" addr={CONTRACT_IDS.vault} />
           <ContractRow label="PricingEngine" addr={CONTRACT_IDS.pricingEngine} />
-          <ContractRow label="DIA Oracle"    addr={metrics?.oracleAddress ?? CONTRACT_IDS.oracle} />
+          <ContractRow label="Reflector Oracle" addr={metrics?.oracleAddress ?? CONTRACT_IDS.oracle} />
           <ContractRow label="USDC SAC"      addr={CONTRACT_IDS.usdcToken} />
         </div>
       </section>
@@ -112,7 +112,7 @@ export default function MetricsPage() {
         <div className="glass-card overflow-hidden">
           <Row label="Backend indexer"   value="SQLite + 30s poll" sub="see docs/data-indexing.md" />
           <Row label="Soroban RPC"       value="testnet.stellar.org" valueClass="text-mint" />
-          <Row label="Oracle"            value="DIA push (autonomous)" sub="no keeper required" />
+          <Row label="Oracle"            value="Reflector (14-decimal)" sub="updates every ~5 minutes" />
           <Row label="Settlement keeper" value="permissionless" sub="any user can call settle()" />
         </div>
         <div className="mt-4 flex items-center gap-3 text-[11px] text-white/30 font-sans">

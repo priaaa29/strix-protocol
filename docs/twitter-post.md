@@ -30,7 +30,7 @@ Replace `[ATTACH SCREENSHOT]` markers with actual screenshots when posting. Each
 
 ## Tweet 3 (the live demo)
 
-> Live options chain — ATM + 8 OTM/ITM strikes, every premium computed in real-time by the on-chain Black-Scholes engine reading from DIA oracle.
+> Live options chain — ATM + 8 OTM/ITM strikes, every premium computed in real-time by the on-chain Black-Scholes engine reading from Reflector oracle.
 >
 > No off-chain price server. No cached premiums. It's all Soroban.
 >

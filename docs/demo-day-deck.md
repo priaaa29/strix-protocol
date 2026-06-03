@@ -56,14 +56,14 @@ PEER-TO-POOL OPTIONS · FULLY ON-CHAIN
 ✓ Black-Scholes priced in pure Rust i128 fixed-point
    → premiums computed live by the contract, not a server
 
-✓ DIA oracle (autonomous push) provides spot price
+✓ Reflector oracle (autonomous push) provides spot price
    → no keeper bot, no trusted middleman
 
 ✓ Cash settlement in USDC at Friday 8:00 UTC
    → permissionless: any user can call settle()
 ```
 
-**🎙️ Say:** "Strix uses a peer-to-pool model. One vault of USDC underwrites every option position — no orderbook, no per-strike matchmaking. Black-Scholes pricing runs entirely in Rust on-chain with seven-decimal fixed-point precision. DIA's autonomous push oracle gives us spot price without needing a keeper. And settlement is permissionless — anyone can call it after expiry."
+**🎙️ Say:** "Strix uses a peer-to-pool model. One vault of USDC underwrites every option position — no orderbook, no per-strike matchmaking. Black-Scholes pricing runs entirely in Rust on-chain with seven-decimal fixed-point precision. Reflector's push oracle gives us spot price without needing a keeper. And settlement is permissionless — anyone can call it after expiry."
 
 **Visual:** Architecture diagram from docs/ARCHITECTURE.pdf. If you can do one custom slide, this is it.
 
@@ -79,7 +79,7 @@ PEER-TO-POOL OPTIONS · FULLY ON-CHAIN
  1. Connect wallet         (Stellar Wallets Kit)
  2. Deposit USDC to vault  (receive shares)
  3. Buy a call option      (premium paid to vault)
- 4. Settle after expiry    (DIA oracle final price)
+ 4. Settle after expiry    (Reflector oracle final price)
  5. Claim USDC payout      (if ITM)
 ```
 
@@ -129,7 +129,7 @@ SOROBAN ARCHITECTURE
         │                       │                     │
         └──────────────────┬────┴─────────────────────┘
                            ▼
-                  DIA Oracle  ·  Circle testnet USDC
+                  Reflector Oracle  ·  Circle testnet USDC
 
 Math validated against Python scipy reference.
 Worst-case error across 5 canonical strikes: 0.18 %.
@@ -197,12 +197,12 @@ NEXT 4–6 WEEKS (Phase 2)
 3. Greeks in chain UI          (asked by Rohan)
 4. Tail-hedge strikes ±40 %    (asked by Shreya)
 5. Per-LP attribution dashboard (asked by Rahul)
-6. Multi-asset underlyings     (BTC/USD, ETH/USD via DIA)
+6. Multi-asset underlyings     (BTC/USD, ETH/USD via Reflector or DIA)
 
 Each ships as its own PR. Commit history maps to user feedback.
 ```
 
-**🎙️ Say:** "Our Phase-2 roadmap is fully scoped from user feedback. Realized APR for LPs, WebSocket events for market makers, Greeks for active traders, deeper out-of-the-money puts for hedgers, per-LP attribution dashboards, and multi-asset underlyings using the same DIA oracle. Every item ships as its own pull request so the commit history maps directly back to a specific piece of feedback."
+**🎙️ Say:** "Our Phase-2 roadmap is fully scoped from user feedback. Realized APR for LPs, WebSocket events for market makers, Greeks for active traders, deeper out-of-the-money puts for hedgers, per-LP attribution dashboards, and multi-asset underlyings using the same Reflector oracle. Every item ships as its own pull request so the commit history maps directly back to a specific piece of feedback."
 
 **Visual:** Numbered list, no clutter. Each line tagged with the user who asked for it.
 

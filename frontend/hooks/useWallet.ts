@@ -35,6 +35,19 @@ function ensureKit() {
   kitReady = true;
 }
 
+/** Returns the network short-name the connected wallet reports it's currently on. */
+async function readWalletNetwork(): Promise<string | null> {
+  try {
+    const { networkPassphrase } = await StellarWalletsKit.getNetwork();
+    if (networkPassphrase === Networks.PUBLIC) return 'mainnet';
+    if (networkPassphrase === Networks.TESTNET) return 'testnet';
+    if (networkPassphrase === Networks.FUTURENET) return 'futurenet';
+    return networkPassphrase ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function useWallet() {
   const [wallet, setWallet] = useState<WalletState>({
     connected: false,
@@ -43,12 +56,24 @@ export function useWallet() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // If the user's wallet is on a different network than ACTIVE_NETWORK, we
+  // surface that here so the UI can show a banner + disable trade actions.
+  const [networkMismatch, setNetworkMismatch] = useState<{ walletNetwork: string } | null>(null);
 
   useEffect(() => {
     ensureKit();
     const savedAddress = localStorage.getItem(ADDRESS_KEY);
     if (savedAddress) {
       setWallet({ connected: true, address: savedAddress, network: ACTIVE_NETWORK });
+      // Verify the wallet is actually on the network we expect.
+      void (async () => {
+        const walletNet = await readWalletNetwork();
+        if (walletNet && walletNet !== ACTIVE_NETWORK) {
+          setNetworkMismatch({ walletNetwork: walletNet });
+        } else {
+          setNetworkMismatch(null);
+        }
+      })();
     }
   }, []);
 
@@ -60,6 +85,16 @@ export function useWallet() {
       const { address } = await StellarWalletsKit.authModal();
       localStorage.setItem(ADDRESS_KEY, address);
       setWallet({ connected: true, address, network: ACTIVE_NETWORK });
+
+      // Check network after auth — wallets can be on Mainnet/Futurenet while
+      // the app is targeting testnet, and silent network mismatches lead to
+      // every signature failing with a cryptic error.
+      const walletNet = await readWalletNetwork();
+      if (walletNet && walletNet !== ACTIVE_NETWORK) {
+        setNetworkMismatch({ walletNetwork: walletNet });
+      } else {
+        setNetworkMismatch(null);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (!msg.includes('cancel') && !msg.includes('closed')) {
@@ -75,7 +110,8 @@ export function useWallet() {
     localStorage.removeItem(WALLET_ID_KEY);
     setWallet({ connected: false, address: null, network: null });
     setError(null);
+    setNetworkMismatch(null);
   }, []);
 
-  return { wallet, loading, error, connect, disconnect };
+  return { wallet, loading, error, networkMismatch, connect, disconnect };
 }

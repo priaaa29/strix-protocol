@@ -11,7 +11,7 @@
 
 > "Options trading has existed in traditional finance for decades — but on-chain options have always been limited by slow settlement and expensive computation.
 >
-> Strix Protocol brings European cash-settled options to Stellar, powered by Black-Scholes pricing and the DIA oracle — fully on-chain, no orderbook required."
+> Strix Protocol brings European cash-settled options to Stellar, powered by Black-Scholes pricing and the Reflector oracle — fully on-chain, no orderbook required."
 
 ---
 
@@ -21,7 +21,7 @@
 
 > "Three Soroban contracts work together.
 >
-> The **PricingEngine** reads the live XLM/USD price from the DIA oracle and runs Black-Scholes math — all in Rust, on-chain, with 7-decimal fixed-point precision.
+> The **PricingEngine** reads the live XLM/USD price from the Reflector oracle and runs Black-Scholes math — all in Rust, on-chain, with 7-decimal fixed-point precision.
 >
 > The **UnderwritingVault** holds Circle's testnet USDC from liquidity providers. It automatically locks collateral when options are sold and releases it after settlement.
 >
@@ -85,7 +85,7 @@
 
 **[Show: Navigate to /positions, settled position visible]**
 
-> "After expiry, any user can trigger settlement. The PricingEngine reads the final DIA oracle price and calculates payouts.
+> "After expiry, any user can trigger settlement. The PricingEngine reads the final Reflector oracle price and calculates payouts.
 >
 > In this expired epoch, XLM closed above my strike — so I'm in the money."
 
