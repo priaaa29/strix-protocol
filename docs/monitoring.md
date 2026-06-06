@@ -92,7 +92,7 @@ Both are wired to the `/health` indexer-freshness check. If `eventListener` is s
 | `/health` JSON response | curl the live endpoint or a deployed staging URL | `Resources/monitoring-health.png` |
 | `/metrics` page | Browser screenshot at https://strix-protocol.vercel.app/metrics | `Resources/monitoring-metrics.png` |
 | Vercel Analytics overview | Vercel dashboard → project → Analytics tab | `Resources/monitoring-vercel.png` |
-| Stellar Expert OptionMarket page | https://stellar.expert/explorer/testnet/contract/CCTQ3LWSSVP3ZLAXNVLXB7DTYPGFGTQ4RHDEGDKV5OT4QNO77HPYCOYX | `Resources/monitoring-expert.png` |
+| Stellar Expert OptionMarket page | https://stellar.expert/explorer/testnet/contract/CAMRJSRD7S2NW6APYRB3QHDTBOEHY7OMZCPAW3C4I7H55EOQG2QEWPXP | `Resources/monitoring-expert.png` |
 
 Add the four to the README "Monitoring dashboard" submission row.
 
