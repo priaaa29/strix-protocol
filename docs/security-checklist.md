@@ -66,7 +66,7 @@ Audit performed against [OWASP Top 10 for Smart Contracts](https://owasp.org/www
 | O1 | `.env` and `.deployed.json` patterns gitignored | ✅ | `.gitignore` excludes `*.env*` and `scripts/.onboarded-secrets.json` |
 | O2 | Deployment script idempotent (rerun-safe) | ✅ | `scripts/deploy.sh` skips already-deployed contracts |
 | O3 | Pause switch exists for emergency stop | ✅ | `option-market/set_paused(admin, true)` halts new buys without affecting settle/claim |
-| O4 | Test coverage includes adversarial scenarios | ✅ | 88 tests (32 pricing-engine + 31 option-market + 17 vault + 8 integration); includes "buyer not authorized," "stale oracle," "already settled" |
+| O4 | Test coverage includes adversarial scenarios | ✅ | 101 tests (37 pricing-engine + 36 option-market + 20 vault + 8 integration); includes "buyer not authorized," "stale oracle," "already settled," "settlement price published too late after expiry," "PAYCAP event fires when call payout would exceed locked collateral," "set_option_market rejected after first call," "calc_call_premium rejects strike ≤ 0" |
 
 ## Known mitigated risks
 

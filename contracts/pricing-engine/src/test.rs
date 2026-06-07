@@ -420,3 +420,46 @@ fn test_put_itm_greater_than_call_otm() {
         to_float(call)
     );
 }
+
+// ─── Audit-fix regression tests ──────────────────────────────────────────────
+//
+// Tests for the input-validation guards introduced after the audit
+// (#20). Both premium-calc entry points must panic on non-positive
+// strike or zero amount instead of falling through into Black-Scholes
+// and producing garbage (or division-by-zero panics with confusing
+// messages).
+
+#[test]
+#[should_panic(expected = "strike must be positive")]
+fn test_calc_call_premium_rejects_zero_strike() {
+    let (_env, client, _oracle, _admin) = setup();
+    client.calc_call_premium(&0i128, &expiry_7d(), &1u64);
+}
+
+#[test]
+#[should_panic(expected = "strike must be positive")]
+fn test_calc_call_premium_rejects_negative_strike() {
+    let (_env, client, _oracle, _admin) = setup();
+    client.calc_call_premium(&-1i128, &expiry_7d(), &1u64);
+}
+
+#[test]
+#[should_panic(expected = "strike must be positive")]
+fn test_calc_put_premium_rejects_zero_strike() {
+    let (_env, client, _oracle, _admin) = setup();
+    client.calc_put_premium(&0i128, &expiry_7d(), &1u64);
+}
+
+#[test]
+#[should_panic(expected = "amount must be positive")]
+fn test_calc_call_premium_rejects_zero_amount() {
+    let (_env, client, _oracle, _admin) = setup();
+    client.calc_call_premium(&to_fixed(0.12), &expiry_7d(), &0u64);
+}
+
+#[test]
+#[should_panic(expected = "amount must be positive")]
+fn test_calc_put_premium_rejects_zero_amount() {
+    let (_env, client, _oracle, _admin) = setup();
+    client.calc_put_premium(&to_fixed(0.12), &expiry_7d(), &0u64);
+}

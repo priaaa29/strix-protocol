@@ -119,7 +119,7 @@ Live now → strix-protocol.vercel.app/api/sponsor
 ```
 SOROBAN ARCHITECTURE
 
-3 contracts · 88 tests passing · 0 mocks left
+3 contracts · 101 tests passing · 0 mocks left
 
 ┌────────────────┐   ┌─────────────────────┐   ┌──────────────┐
 │ PricingEngine  │   │ UnderwritingVault   │   │ OptionMarket │
@@ -135,7 +135,7 @@ Math validated against Python scipy reference.
 Worst-case error across 5 canonical strikes: 0.18 %.
 ```
 
-**🎙️ Say:** "Three Soroban contracts, ninety-two tests passing. PricingEngine runs the Black-Scholes math in pure i128 fixed-point arithmetic — no floats, no surprises. Vault holds the LP capital and tracks share-price appreciation as premiums flow in. OptionMarket is the user-facing entry point with cross-contract calls to both. Our pricing math is validated against Python scipy — worst-case error under two-tenths of a percent."
+**🎙️ Say:** "Three Soroban contracts, a hundred and one tests passing. PricingEngine runs the Black-Scholes math in pure i128 fixed-point arithmetic — no floats, no surprises. Vault holds the LP capital and tracks share-price appreciation as premiums flow in. OptionMarket is the user-facing entry point with cross-contract calls to both. Our pricing math is validated against Python scipy — worst-case error under two-tenths of a percent."
 
 **Visual:** Same architecture cells as Slide 3 but zoomed-in. Optional: a code snippet of `calc_call_premium` from PricingEngine. Don't over-explain the math.
 
@@ -259,7 +259,7 @@ We're looking for:
 - [ ] One slide with the **architecture diagram** as a full-bleed image, exported from `docs/ARCHITECTURE.pdf` page 1
 - [ ] A **15-second pre-recorded screencap** of the buy flow as a fallback if the live demo fails on stage
 - [ ] Stellar Expert tab open in the background showing a fee-bumped sponsored tx — for the "feeAccount ≠ sourceAccount" proof if asked
-- [ ] Terminal tab open showing `cargo test` output for the 88 tests — only show if challenged on testing
+- [ ] Terminal tab open showing `cargo test` output for the 101 tests — only show if challenged on testing
 - [ ] **One-line answer for the most likely question** ("Why Stellar and not Solana / Arbitrum?") — _because Soroban's authorization model and sub-cent fees make options sustainable at small contract sizes, where every other chain economically excludes retail._
 
 ### Timing
