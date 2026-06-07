@@ -81,7 +81,7 @@ impl OptionMarket {
     /// * `pricing_engine` — PricingEngine contract address
     /// * `vault`          — UnderwritingVault contract address
     /// * `usdc_token`     — SAC-wrapped USDC address
-    /// * `oracle`         — DIA oracle address
+    /// * `oracle`         — Reflector oracle address
     /// * `contract_size`  — XLM per contract in 7-decimal (10_000_000 = 1 XLM)
     pub fn initialize(
         env: Env,
@@ -435,7 +435,7 @@ impl OptionMarket {
     /// Settle all positions for a given expiry.
     ///
     /// Can be called by anyone after the expiry timestamp has passed.
-    /// Fetches settlement price from DIA oracle, calculates payouts
+    /// Fetches settlement price from the Reflector oracle, calculates payouts
     /// for all positions, updates position records, and handles vault accounting.
     ///
     /// # Arguments

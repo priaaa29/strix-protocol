@@ -83,7 +83,7 @@ Two long-running backend processes that don't have request lifecycles, so reques
 
 Both are wired to the `/health` indexer-freshness check. If `eventListener` is silently failing, indexer lag grows past 5 minutes and `/health` flips to 503.
 
-`process.on('unhandledRejection')` ensures any unhandled promise rejection inside these workers crashes the process loudly rather than silently dropping. The hosting environment (PM2 / Docker restart policy / systemd) is responsible for restarting after crash.
+`process.on('unhandledRejection')` and `process.on('uncaughtException')` log the error with full stack traces but do not kill the process — restarting the whole indexer + HTTP server every time a single Soroban RPC call rejects unexpectedly was the wrong trade. Persistent failures still surface via `/health` (RPC and indexer-lag checks flip to error).
 
 ## What to screenshot for submission
 

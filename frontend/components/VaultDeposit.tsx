@@ -31,7 +31,7 @@ export function VaultDeposit({ walletAddress }: VaultDepositProps) {
     if (!walletAddress || amountBigint <= 0n) return;
     setLoading(true);
     setTxResult({ hash: '', status: 'pending' });
-    const result = await deposit(amountBigint);
+    const result = await deposit(amountBigint, (next) => setTxResult(next));
     setTxResult(result);
     setLoading(false);
     if (result.status === 'confirmed') setAmount('');

@@ -119,7 +119,7 @@ Live now → strix-protocol.vercel.app/api/sponsor
 ```
 SOROBAN ARCHITECTURE
 
-3 contracts · 92 tests passing · 0 mocks left
+3 contracts · 88 tests passing · 0 mocks left
 
 ┌────────────────┐   ┌─────────────────────┐   ┌──────────────┐
 │ PricingEngine  │   │ UnderwritingVault   │   │ OptionMarket │
@@ -197,7 +197,7 @@ NEXT 4–6 WEEKS (Phase 2)
 3. Greeks in chain UI          (asked by Rohan)
 4. Tail-hedge strikes ±40 %    (asked by Shreya)
 5. Per-LP attribution dashboard (asked by Rahul)
-6. Multi-asset underlyings     (BTC/USD, ETH/USD via Reflector or DIA)
+6. Multi-asset underlyings     (BTC/USD, ETH/USD via Reflector)
 
 Each ships as its own PR. Commit history maps to user feedback.
 ```
@@ -259,7 +259,7 @@ We're looking for:
 - [ ] One slide with the **architecture diagram** as a full-bleed image, exported from `docs/ARCHITECTURE.pdf` page 1
 - [ ] A **15-second pre-recorded screencap** of the buy flow as a fallback if the live demo fails on stage
 - [ ] Stellar Expert tab open in the background showing a fee-bumped sponsored tx — for the "feeAccount ≠ sourceAccount" proof if asked
-- [ ] Terminal tab open showing `cargo test` output for the 92 tests — only show if challenged on testing
+- [ ] Terminal tab open showing `cargo test` output for the 88 tests — only show if challenged on testing
 - [ ] **One-line answer for the most likely question** ("Why Stellar and not Solana / Arbitrum?") — _because Soroban's authorization model and sub-cent fees make options sustainable at small contract sizes, where every other chain economically excludes retail._
 
 ### Timing

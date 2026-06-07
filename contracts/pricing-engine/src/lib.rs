@@ -27,7 +27,7 @@ const MIN_PREMIUM: i128 = 100_000;
 pub struct PricingConfig {
     /// Contract administrator.
     pub admin: Address,
-    /// DIA oracle contract address.
+    /// Reflector oracle contract address (XLM/USD feed).
     pub oracle: Address,
     /// Implied volatility in basis points (8000 = 80%).
     pub iv_bps: u64,
@@ -54,7 +54,7 @@ impl PricingEngine {
     ///
     /// # Arguments
     /// * `admin`      — administrator address (can update IV/spread)
-    /// * `oracle`     — DIA oracle contract address
+    /// * `oracle`     — Reflector oracle contract address
     /// * `iv_bps`     — implied volatility in bps (8000 = 80%)
     /// * `spread_bps` — protocol spread in bps (100 = 1%)
     pub fn initialize(

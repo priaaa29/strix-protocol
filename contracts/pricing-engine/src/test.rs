@@ -68,7 +68,7 @@ fn setup() -> (Env, PricingEngineClient<'static>, Address, Address) {
     let oracle_id = env.register_contract(None, MockOracle);
 
     // Set oracle price: 0.12 USD per XLM
-    // DIA 8-decimal: 0.12 * 10^8 = 12_000_000
+    // Reflector 14-decimal: 0.12 * 10^14 = 12_000_000_000_000
     MockOracleClient::new(&env, &oracle_id).set_price(
         &12_000_000_000_000i128,
         &1_700_000_000u64,

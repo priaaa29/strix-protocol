@@ -109,7 +109,7 @@
 
 **[Show: terminal running `cargo test`, all green]**
 
-> "Strix ships with a full test suite — **92 tests** across pricing, vault, option-market, and end-to-end integration. All passing.
+> "Strix ships with a full test suite — **88 tests** across pricing, vault, option-market, and end-to-end integration. All passing.
 >
 > Pricing math is validated against Python scipy — all reference cases within 0.2% tolerance."
 

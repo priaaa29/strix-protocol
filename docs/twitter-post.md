@@ -41,7 +41,7 @@ Replace `[ATTACH SCREENSHOT]` markers with actual screenshots when posting. Each
 > Pricing math validated against Python scipy reference across 5 canonical strikes.
 > All within 0.2% tolerance.
 >
-> Plus 92 tests passing across the 3 contracts and end-to-end integration.
+> Plus 88 tests passing across the 3 contracts and end-to-end integration.
 >
 > [ATTACH SCREENSHOT: terminal showing `cargo test` with green test results]
 

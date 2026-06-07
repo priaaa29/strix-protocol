@@ -75,7 +75,7 @@ All values are 7-decimal fixed-point strings (divide by 10_000_000 for human-rea
 ### `GET /api/options/chain?expiry=<unix_timestamp>`
 Returns strikes and premiums for an expiry (cached 2 min from chain).
 
-Defaults to next Friday 16:00 UTC if no expiry specified.
+Defaults to next Friday 08:00 UTC if no expiry specified.
 
 **Response:**
 ```json

@@ -38,11 +38,11 @@ export function usePositions(walletAddress: string | null) {
   }, [refresh]);
 
   const claim = useCallback(
-    async (positionId: number): Promise<TxResult> => {
+    async (positionId: number, onProgress?: (next: TxResult) => void): Promise<TxResult> => {
       if (!walletAddress) {
         return { hash: '', status: 'failed', error: 'Wallet not connected' };
       }
-      const result = await claimPosition(walletAddress, positionId);
+      const result = await claimPosition(walletAddress, positionId, onProgress);
       if (result.status === 'confirmed') await refresh();
       return result;
     },

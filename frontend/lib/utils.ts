@@ -54,8 +54,14 @@ export function formatSharePrice(price: bigint): string {
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as const;
 
 export function formatExpiry(ts: number): string {
+  // Derive the hour from the timestamp itself rather than hardcoding.
+  // The on-chain epoch hour is EXPIRY_HOUR_UTC (currently 08:00 UTC);
+  // formatting from the timestamp keeps this display in sync with the
+  // single source of truth in lib/expiry.ts.
   const d = new Date(ts * 1000);
-  return `Fri, ${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()} · 16:00 UTC`;
+  const hh = d.getUTCHours().toString().padStart(2, '0');
+  const mm = d.getUTCMinutes().toString().padStart(2, '0');
+  return `Fri, ${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()} · ${hh}:${mm} UTC`;
 }
 
 /** Format a timestamp as a countdown string, e.g. "2d 4h 30m". */
@@ -114,17 +120,6 @@ export function explorerContractUrl(contractId: string, network = 'testnet'): st
   return `${base}/contract/${contractId}`;
 }
 
-/** Estimate APY from premium earned over period. */
-export function estimateApy(
-  premiumEarned: bigint,
-  tvl: bigint,
-  periodDays: number
-): number {
-  if (tvl === 0n) return 0;
-  const rate = fromFixed(premiumEarned) / fromFixed(tvl);
-  const annualized = rate * (365 / periodDays);
-  return annualized * 100;
-}
 
 /** Calculate P&L for a position. */
 export function calcPnl(

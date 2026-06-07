@@ -104,11 +104,11 @@ export function useVault(walletAddress: string | null) {
   }, []);
 
   const deposit = useCallback(
-    async (amount: bigint): Promise<TxResult> => {
+    async (amount: bigint, onProgress?: (next: TxResult) => void): Promise<TxResult> => {
       if (!addrRef.current) {
         return { hash: '', status: 'failed', error: 'Wallet not connected' };
       }
-      const result = await depositToVault(addrRef.current, amount);
+      const result = await depositToVault(addrRef.current, amount, onProgress);
       if (result.status === 'confirmed') {
         await fetchAll(addrRef.current);
       }
@@ -118,11 +118,11 @@ export function useVault(walletAddress: string | null) {
   );
 
   const withdraw = useCallback(
-    async (shares: bigint): Promise<TxResult> => {
+    async (shares: bigint, onProgress?: (next: TxResult) => void): Promise<TxResult> => {
       if (!addrRef.current) {
         return { hash: '', status: 'failed', error: 'Wallet not connected' };
       }
-      const result = await withdrawFromVault(addrRef.current, shares);
+      const result = await withdrawFromVault(addrRef.current, shares, onProgress);
       if (result.status === 'confirmed') {
         await fetchAll(addrRef.current);
       }

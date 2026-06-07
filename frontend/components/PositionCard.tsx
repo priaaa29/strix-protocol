@@ -8,7 +8,7 @@ import type { Position, TxResult } from '@/lib/types';
 
 interface PositionCardProps {
   position: Position;
-  onClaim: (positionId: number) => Promise<TxResult>;
+  onClaim: (positionId: number, onProgress?: (next: TxResult) => void) => Promise<TxResult>;
 }
 
 export function PositionCard({ position, onClaim }: PositionCardProps) {
@@ -23,7 +23,7 @@ export function PositionCard({ position, onClaim }: PositionCardProps) {
   const handleClaim = async () => {
     setClaiming(true);
     setTxResult({ hash: '', status: 'pending' });
-    const result = await onClaim(position.id);
+    const result = await onClaim(position.id, (next) => setTxResult(next));
     setTxResult(result);
     setClaiming(false);
   };

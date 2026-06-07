@@ -84,5 +84,4 @@ export interface VaultStats {
   locked: bigint;
   available: bigint;
   totalShares: bigint;
-  estimatedApy: number; // percentage, 0-100
 }

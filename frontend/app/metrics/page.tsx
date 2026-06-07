@@ -68,7 +68,7 @@ export default function MetricsPage() {
         <Kpi label="Total Value Locked" value={metrics ? formatUsdcDollar(metrics.tvl, 0) : null} sub="USDC underwriting capacity" />
         <Kpi label="Capital Utilization" value={metrics ? formatPercent(utilizationBps / 100, 2) : null} sub="locked vs. available" />
         <Kpi label="Positions Opened" value={metrics ? metrics.totalPositions.toString() : null} sub="lifetime cumulative" />
-        <Kpi label="Active Wallets" value={COMMUNITY_ACCOUNTS.length.toString()} sub="onboarded community" />
+        <Kpi label="Onboarded Wallets" value={`${COMMUNITY_ACCOUNTS.length}`} sub="6 real testers + 24 demo seeds" />
       </section>
 
       {/* ─── Vault breakdown ──────────────────────────────── */}

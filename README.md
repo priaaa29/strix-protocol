@@ -102,9 +102,9 @@ These exist to populate the explorer page. They are NOT real users — see the c
 ┌───────────────────▼─────────────────────────────────────┐
 │   PricingEngine      UnderwritingVault    OptionMarket   │
 │  (Black-Scholes)   (share accounting)   (buy/settle/     │
-│     (DIA RPC)      (collateral mgmt)     claim)          │
+│  (Reflector RPC)   (collateral mgmt)     claim)          │
 └───────────────────┬─────────────────────────────────────┘
-                    │ DIA oracle (on-chain push)
+                    │ Reflector oracle (on-chain push)
 ┌───────────────────▼─────────────────────────────────────┐
 │              Backend (Express + SQLite)                  │
 │           event indexer · REST API · cache               │
@@ -115,7 +115,7 @@ These exist to populate the explorer page. They are NOT real users — see the c
 
 | Contract | Description |
 |----------|-------------|
-| `PricingEngine` | Black-Scholes call/put premiums via DIA oracle |
+| `PricingEngine` | Black-Scholes call/put premiums via Reflector oracle |
 | `UnderwritingVault` | USDC deposit/withdraw, share accounting, capital management |
 | `OptionMarket` | Buy options, register strikes, settle expiries, claim payouts |
 
@@ -186,8 +186,8 @@ npm run dev
 ## Options Model
 
 - **Type:** European cash-settled
-- **Underlying:** XLM/USDC (via DIA oracle, 8-decimal precision)
-- **Expiries:** Weekly Fridays, 16:00 UTC
+- **Underlying:** XLM/USDC (via Reflector oracle, 14-decimal precision normalised to our 7-decimal scale)
+- **Expiries:** Weekly Fridays, 08:00 UTC
 - **Strikes:** ATM ± 5/10/15/20% (9 strikes per epoch)
 - **Settlement:** Any user can call `settle()` after expiry passes
 - **Payout:** `max(spot - strike, 0)` per contract for calls; `max(strike - spot, 0)` for puts
@@ -262,7 +262,7 @@ Improvements below are scoped directly from the feedback above. Each ships as it
 3. **Greeks on the chain UI** (asked by Rohan) — compute Δ/Γ/Θ/Vega from existing Black-Scholes machinery and surface in the buy modal + chain hover state.
 4. **Tail-hedge strikes** (asked by Shreya) — extend strike grid from ±20% to ±40% (13 strikes instead of 9). Requires gas-budget audit; may need to split epoch creation across two txs.
 5. **Per-LP attribution dashboard** (asked by Rahul) — breakdown of LP's premium income by strike and expiry, exposed on the Positions page when wallet has vault shares.
-6. **Multi-asset underlyings** (asked by Shreya) — add BTC/USD and ETH/USD oracle feeds (DIA already supports both), deploy parallel PricingEngine instances per underlying.
+6. **Multi-asset underlyings** (asked by Shreya) — add BTC/USD and ETH/USD oracle feeds (Reflector publishes both on Stellar testnet), deploy parallel PricingEngine instances per underlying.
 
 ### Recent improvement commits (informed by feedback)
 

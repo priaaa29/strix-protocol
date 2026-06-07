@@ -374,7 +374,7 @@ fn test_settle_itm_call() {
     });
 
     // Set settlement price to 0.15 (ITM for call with strike 0.12)
-    // DIA 8-decimal: 0.15 * 10^8 = 15_000_000
+    // Reflector 14-decimal: 0.15 * 10^14 = 15_000_000_000_000
     MockOracleClient::new(&ctx.env, &ctx.oracle_id)
         .set_price(&15_000_000_000_000i128, &(expiry_7d() + 100));
 

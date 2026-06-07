@@ -94,7 +94,7 @@ export default function Dashboard() {
           </h1>
 
           <p className="text-[13px] text-white/40 max-w-[360px] leading-relaxed mb-9 font-sans">
-            European-style. Black-Scholes priced. Cash-settled in USDC every Friday at 16:00 UTC.
+            European-style. Black-Scholes priced. Cash-settled in USDC every Friday at 08:00 UTC.
           </p>
 
           <div className="flex items-center gap-3 flex-wrap">
@@ -146,7 +146,7 @@ export default function Dashboard() {
               sub: 'USDC underwriting capacity',
             },
             { val: '80%',    label: 'Implied Volatility', sub: 'Black-Scholes model input' },
-            { val: 'Weekly', label: 'Settlement Cycle',   sub: 'Every Friday · 16:00 UTC' },
+            { val: 'Weekly', label: 'Settlement Cycle',   sub: 'Every Friday · 08:00 UTC' },
           ].map(({ val, label, sub }) => (
             <div key={label} className="px-7 py-8 bg-[hsl(0,0%,3%)] group hover:bg-white/[0.02] transition-colors">
               <div className="font-display text-[clamp(28px,4.5vw,44px)] font-bold text-white leading-none tracking-tight mb-2">
@@ -318,7 +318,7 @@ export default function Dashboard() {
           {[
             { n: '01', title: 'LPs Fund the Vault',   body: 'Deposit USDC to underwrite options. Earn premium income when options expire worthless.' },
             { n: '02', title: 'Traders Buy Options',  body: 'Buy European calls or puts at any listed strike. Black-Scholes pricing with live oracle data.' },
-            { n: '03', title: 'Friday Settlement',    body: 'Options settle at 16:00 UTC each Friday. Any wallet can settle the epoch; ITM holders claim in one click.' },
+            { n: '03', title: 'Friday Settlement',    body: 'Options settle at 08:00 UTC each Friday. Any wallet can settle the epoch; ITM holders claim in one click.' },
           ].map(step => (
             <Tilt key={step.n} strength={5}>
               <div className="glass-card px-6 py-6 h-full">

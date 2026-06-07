@@ -44,7 +44,7 @@ export function VaultWithdraw({ walletAddress }: VaultWithdrawProps) {
     if (!walletAddress || sharesBigint <= 0n) return;
     setLoading(true);
     setTxResult({ hash: '', status: 'pending' });
-    const result = await withdraw(sharesBigint);
+    const result = await withdraw(sharesBigint, (next) => setTxResult(next));
     setTxResult(result);
     setLoading(false);
     if (result.status === 'confirmed') setShareAmount('');

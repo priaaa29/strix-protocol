@@ -15,7 +15,7 @@ Audit performed against [OWASP Top 10 for Smart Contracts](https://owasp.org/www
 | # | Check | Status | Evidence |
 |---|-------|--------|----------|
 | S1 | All state-mutating entry points call `require_auth()` on the user address | ✅ | `option-market/src/lib.rs:226,334,434,537` (buy_call, buy_put, settle, claim) and `underwriting-vault/src/lib.rs` deposit/withdraw |
-| S2 | Cross-contract calls between Vault ↔ OptionMarket require admin-only initialization wiring | ✅ | `option-market/src/lib.rs:86` (`initialize`) records authorized vault address; `set_pricing_engine`/`set_vault` are admin-gated |
+| S2 | Cross-contract calls between Vault ↔ OptionMarket require admin-only, one-shot initialization wiring | ✅ | `option-market/src/lib.rs::initialize` records the authorized vault address (set-once via strict `has(Config)` guard); `underwriting-vault/src/lib.rs::set_option_market` is set-once — only allowed while option_market still equals the placeholder AND no LP capital is locked |
 | S3 | `Vec`/`Map` storage keys are namespaced by `DataKey` enum to prevent collision | ✅ | `option-market/src/types.rs`, `underwriting-vault/src/types.rs` |
 | S4 | Persistent storage TTL is extended on writes to prevent eviction | ✅ | `extend_ttl(&key, 100_000, 1_000_000)` on every persistent write in `option-market/src/lib.rs:206` |
 | S5 | No floating-point arithmetic anywhere in contracts | ✅ | Pure i128 fixed-point, 7-decimal scale. Verified by 32 pricing tests against Python scipy reference (±0.2%) |
@@ -25,7 +25,7 @@ Audit performed against [OWASP Top 10 for Smart Contracts](https://owasp.org/www
 
 | # | Check | Status | Evidence |
 |---|-------|--------|----------|
-| A1 | Admin-only functions check `admin == config.admin` before running | ✅ | `create_epoch`, `set_iv`, `set_spread`, `set_paused`, `set_pricing_engine` all gate on `config.admin` |
+| A1 | Admin-only functions check `admin == config.admin` before running | ✅ | `create_epoch`, `set_iv`, `set_spread`, `set_paused` (option-market) and `set_option_market`, `set_max_tvl` (vault) all gate on `config.admin == admin` after `admin.require_auth()` |
 | A2 | Position claim verifies position owner matches caller | ✅ | `option-market/src/lib.rs:537` (`claim`) checks `pos.owner == owner` after `owner.require_auth()` |
 | A3 | Vault deposit/withdraw require the depositor's signature, not just any signer | ✅ | `depositor.require_auth()` enforced before USDC `transfer_from` |
 | A4 | Settlement is permissionless (any user can trigger after expiry) — intentional design | ✅ | Documented in `docs/api.md`; reduces admin liveness dependency |
@@ -66,7 +66,7 @@ Audit performed against [OWASP Top 10 for Smart Contracts](https://owasp.org/www
 | O1 | `.env` and `.deployed.json` patterns gitignored | ✅ | `.gitignore` excludes `*.env*` and `scripts/.onboarded-secrets.json` |
 | O2 | Deployment script idempotent (rerun-safe) | ✅ | `scripts/deploy.sh` skips already-deployed contracts |
 | O3 | Pause switch exists for emergency stop | ✅ | `option-market/set_paused(admin, true)` halts new buys without affecting settle/claim |
-| O4 | Test coverage includes adversarial scenarios | ✅ | 92 tests across pricing/vault/market + 8 integration tests; includes "buyer not authorized," "stale oracle," "already settled" |
+| O4 | Test coverage includes adversarial scenarios | ✅ | 88 tests (32 pricing-engine + 31 option-market + 17 vault + 8 integration); includes "buyer not authorized," "stale oracle," "already settled" |
 
 ## Known mitigated risks
 
